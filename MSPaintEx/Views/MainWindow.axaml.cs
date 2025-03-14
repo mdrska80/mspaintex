@@ -8,6 +8,7 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using MSPaintEx.Services;
+using System.Linq;
 
 namespace MSPaintEx.Views;
 
@@ -441,10 +442,40 @@ public partial class MainWindow : Window
             if (result?.Confirmed == true)
             {
                 LogService.LogInfo(LOG_SOURCE, $"Resizing canvas to {result.Width}x{result.Height}");
+                
+                // First resize the bitmap in the canvas
+                _canvas.Resize(result.Width, result.Height);
+                
+                // Then update all the UI elements
                 _canvas.Width = result.Width;
                 _canvas.Height = result.Height;
-                _canvasContainer!.Width = result.Width;
-                _canvasContainer!.Height = result.Height;
+                
+                if (_canvasContainer != null)
+                {
+                    _canvasContainer.Width = result.Width;
+                    _canvasContainer.Height = result.Height;
+                    
+                    // Update background rectangle size
+                    var backgroundRect = _canvasContainer.Children.OfType<Rectangle>().FirstOrDefault();
+                    if (backgroundRect != null)
+                    {
+                        backgroundRect.Width = result.Width;
+                        backgroundRect.Height = result.Height;
+                    }
+                }
+                
+                // Update scroll content size based on current zoom
+                if (_scrollContent != null)
+                {
+                    double zoomFactor = (double)_currentZoom / 100.0;
+                    _scrollContent.Width = result.Width * zoomFactor;
+                    _scrollContent.Height = result.Height * zoomFactor;
+                }
+
+                // Force a visual update
+                _canvas.InvalidateVisual();
+                if (_canvasContainer != null) _canvasContainer.InvalidateVisual();
+                if (_scrollContent != null) _scrollContent.InvalidateVisual();
             }
         }
         catch (Exception ex)

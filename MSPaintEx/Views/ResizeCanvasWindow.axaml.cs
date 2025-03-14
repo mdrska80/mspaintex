@@ -75,6 +75,21 @@ namespace MSPaintEx.Views
         {
             InitializeComponent();
             DataContext = this;
+
+            // Add keyboard event handling
+            KeyDown += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                {
+                    OnResizeClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Escape)
+                {
+                    OnCancelClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+            };
         }
 
         public ResizeCanvasWindow(int currentWidth, int currentHeight) : this()
@@ -101,6 +116,13 @@ namespace MSPaintEx.Views
 
         private void OnResizeClick(object sender, RoutedEventArgs e)
         {
+            // Validate dimensions
+            if (CanvasWidth < 1 || CanvasWidth > 4096 || CanvasHeight < 1 || CanvasHeight > 4096)
+            {
+                // TODO: Show error message
+                return;
+            }
+
             var result = new ResizeResult
             {
                 Width = CanvasWidth,

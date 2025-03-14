@@ -5,7 +5,7 @@
         x:DataType="local:ResizeCanvasWindow"
         Title="Resize Canvas"
         Width="400"
-        Height="280"
+        Height="345"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         ExtendClientAreaToDecorationsHint="True"
@@ -65,7 +65,7 @@
 
             <!-- Content area -->
             <Grid Grid.Row="1" Margin="40,20,40,20">
-                <StackPanel Spacing="16">
+                <StackPanel Spacing="12">
                     <!-- Description -->
                     <TextBlock Text="Enter new dimensions for the canvas"
                              Foreground="#000000"
@@ -105,15 +105,17 @@
                     <StackPanel Orientation="Horizontal" 
                               HorizontalAlignment="Right" 
                               Spacing="10"
-                              Margin="0,20,0,0">
+                              Margin="0,12,0,0">
                         <Button Content="Cancel"
                                 Classes="modern"
                                 Click="OnCancelClick"
-                                HotKey="Escape"/>
+                                IsCancel="True"
+                                Width="100"/>
                         <Button Content="OK"
                                 Classes="modern accent"
                                 Click="OnResizeClick"
-                                HotKey="Enter"/>
+                                IsDefault="True"
+                                Width="100"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
