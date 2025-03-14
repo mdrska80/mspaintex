@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MSPaintEx.ViewModels"
+        xmlns:controls="using:MSPaintEx.Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="MSPaintEx.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="MSPaintEx">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <DockPanel LastChildFill="True">
+        <!-- Top toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#F0F0F0" Margin="5" Height="40">
+            <TextBlock Text="Stroke Width: " VerticalAlignment="Center" Margin="5,0"/>
+            <NumericUpDown x:Name="StrokeWidth" 
+                          Value="2"
+                          Minimum="1"
+                          Maximum="50"
+                          ValueChanged="OnStrokeWidthChanged"
+                          Width="100"
+                          MinWidth="100"
+                          Padding="8,0"
+                          HorizontalContentAlignment="Left"
+                          VerticalContentAlignment="Center"
+                          FormatString="0 px"
+                          ClipValueToMinMax="True"
+                          ShowButtonSpinner="True"
+                          AllowSpin="True"
+                          Increment="1"/>
+        </StackPanel>
+
+        <!-- Left color palette -->
+        <controls:ColorPaletteSelector 
+            DockPanel.Dock="Left" 
+            x:Name="ColorSelector"
+            ColorSelected="OnColorSelected"
+            Margin="5"/>
+
+        <!-- Main canvas area -->
+        <Border BorderBrush="Gray" 
+                BorderThickness="1" 
+                Margin="5"
+                Background="White">
+            <controls:DrawingCanvas x:Name="Canvas"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Stretch"/>
+        </Border>
+    </DockPanel>
+
+</Window>

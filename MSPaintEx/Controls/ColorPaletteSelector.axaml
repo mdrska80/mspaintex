@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="252" d:DesignHeight="450"
+             x:Class="MSPaintEx.Controls.ColorPaletteSelector">
+    <Border BorderBrush="Gray" 
+            BorderThickness="1" 
+            Background="#F0F0F0"
+            Width="252">
+        <DockPanel LastChildFill="True" Margin="0">
+            <!-- Current color display -->
+            <Border DockPanel.Dock="Top" 
+                    Height="50" 
+                    Margin="5"
+                    BorderBrush="Black"
+                    BorderThickness="1">
+                <Grid>
+                    <Rectangle x:Name="CurrentColorDisplay"
+                             Fill="Black"/>
+                    <TextBlock x:Name="CurrentColorText"
+                             Text="Current Color"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Bottom"
+                             Foreground="White"
+                             Margin="0,0,0,2"/>
+                </Grid>
+            </Border>
+
+            <!-- Color palette grid -->
+            <ScrollViewer Margin="0" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="ColorGrid" Margin="0">
+                    <!-- Base colors will be populated from code -->
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl> 
