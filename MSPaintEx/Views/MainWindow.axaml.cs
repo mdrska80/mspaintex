@@ -81,6 +81,17 @@ public partial class MainWindow : Window
             
             // Initialize canvas
             _canvas.Clear();
+
+            // Ensure keyboard shortcuts work by handling them directly
+            this.KeyDown += (s, e) => 
+            {
+                if (e.Key == Key.E && e.KeyModifiers == KeyModifiers.Control)
+                {
+                    OnResizeCanvasClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+            };
+
             LogService.LogInfo(LOG_SOURCE, "MainWindow initialized successfully");
         }
         catch (Exception ex)
@@ -412,6 +423,34 @@ public partial class MainWindow : Window
         var about = new AboutWindow();
         LogService.LogInfo("MainWindow", "Opening About dialog");
         await about.ShowDialog(this);
+    }
+
+    private async void OnResizeCanvasClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (_canvas == null)
+            {
+                LogService.LogWarning(LOG_SOURCE, "Canvas is null during resize attempt");
+                return;
+            }
+
+            var resizeWindow = new ResizeCanvasWindow((int)_canvas.Width, (int)_canvas.Height);
+            var result = await resizeWindow.ShowDialog<ResizeResult>(this);
+
+            if (result?.Confirmed == true)
+            {
+                LogService.LogInfo(LOG_SOURCE, $"Resizing canvas to {result.Width}x{result.Height}");
+                _canvas.Width = result.Width;
+                _canvas.Height = result.Height;
+                _canvasContainer!.Width = result.Width;
+                _canvasContainer!.Height = result.Height;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error resizing canvas", ex);
+        }
     }
 
     #endregion

@@ -8,7 +8,9 @@
         x:Class="MSPaintEx.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="MSPaintEx">
+        Title="MSPaintEx"
+        Focusable="True"
+        KeyboardNavigation.IsTabStop="True">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -68,6 +70,7 @@
                     <MenuItem Header="Flip _Horizontal" Click="OnRotateFlipClick"/>
                     <MenuItem Header="Flip _Vertical" Click="OnRotateFlipClick"/>
                 </MenuItem>
+                <MenuItem Header="_Resize Canvas..." InputGesture="Ctrl+E" Click="OnResizeCanvasClick"/>
                 <MenuItem Header="_Resize/Skew..." Click="OnResizeSkewClick"/>
                 <MenuItem Header="_Canvas Size..." Click="OnCanvasSizeClick"/>
                 <Separator/>
@@ -154,7 +157,9 @@
                                               Background="Transparent"
                                               StrokeThickness="2"
                                               RenderOptions.BitmapInterpolationMode="None"
-                                              RenderOptions.EdgeMode="Aliased"/>
+                                              RenderOptions.EdgeMode="Aliased"
+                                              Focusable="True"
+                                              KeyboardNavigation.IsTabStop="True"/>
                     </Grid>
                 </Grid>
             </ScrollViewer>

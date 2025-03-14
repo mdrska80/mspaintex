@@ -1,0 +1,122 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:MSPaintEx.Views"
+        x:Class="MSPaintEx.Views.ResizeCanvasWindow"
+        x:DataType="local:ResizeCanvasWindow"
+        Title="Resize Canvas"
+        Width="400"
+        Height="280"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="#881E90FF"
+        TransparencyLevelHint="AcrylicBlur">
+
+    <Window.Styles>
+        <StyleInclude Source="/Controls/ModernButton.axaml"/>
+    </Window.Styles>
+
+    <Panel>
+        <!-- Background blur with blueish gradient -->
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="#1E90FF"
+                    TintOpacity="0.5"
+                    MaterialOpacity="0.2"/>
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <!-- Additional contrast layer -->
+        <Panel>
+            <Panel.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Offset="0" Color="#15104080"/>
+                    <GradientStop Offset="1" Color="#25104080"/>
+                </LinearGradientBrush>
+            </Panel.Background>
+        </Panel>
+
+        <!-- Main content -->
+        <Grid RowDefinitions="Auto,*">
+            <!-- Custom title bar -->
+            <Grid Grid.Row="0" 
+                  Height="32" 
+                  Background="Transparent"
+                  PointerPressed="OnTitleBarPointerPressed">
+                
+                <DockPanel LastChildFill="True">
+                    <Button Classes="modern-close"
+                            DockPanel.Dock="Right"
+                            Content="✕"
+                            Click="OnCloseClick"/>
+                            
+                    <TextBlock Text="Resize Canvas"
+                             FontSize="13"
+                             Foreground="#000000"
+                             VerticalAlignment="Center"
+                             Margin="16,0"
+                             IsHitTestVisible="False"/>
+                </DockPanel>
+            </Grid>
+
+            <!-- Content area -->
+            <Grid Grid.Row="1" Margin="40,20,40,20">
+                <StackPanel Spacing="16">
+                    <!-- Description -->
+                    <TextBlock Text="Enter new dimensions for the canvas"
+                             Foreground="#000000"
+                             FontSize="16"
+                             TextWrapping="Wrap"/>
+
+                    <!-- Width input -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Width (pixels)"
+                                 Foreground="#000000"
+                                 FontSize="14"/>
+                        <NumericUpDown Value="{Binding CanvasWidth}"
+                                     Minimum="1"
+                                     Maximum="4096"
+                                     FormatString="0"
+                                     Name="WidthInput"/>
+                    </StackPanel>
+
+                    <!-- Height input -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Height (pixels)"
+                                 Foreground="#000000"
+                                 FontSize="14"/>
+                        <NumericUpDown Value="{Binding CanvasHeight}"
+                                     Minimum="1"
+                                     Maximum="4096"
+                                     FormatString="0"
+                                     Name="HeightInput"/>
+                    </StackPanel>
+
+                    <!-- Maintain aspect ratio -->
+                    <CheckBox Content="Maintain aspect ratio"
+                            IsChecked="{Binding MaintainAspectRatio}"
+                            Foreground="#000000"/>
+
+                    <!-- Buttons -->
+                    <StackPanel Orientation="Horizontal" 
+                              HorizontalAlignment="Right" 
+                              Spacing="10"
+                              Margin="0,20,0,0">
+                        <Button Content="Cancel"
+                                Classes="modern"
+                                Click="OnCancelClick"
+                                HotKey="Escape"/>
+                        <Button Content="OK"
+                                Classes="modern accent"
+                                Click="OnResizeClick"
+                                HotKey="Enter"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Panel>
+</Window> 
