@@ -10,7 +10,7 @@
     ExtendClientAreaToDecorationsHint="True"
     ExtendClientAreaChromeHints="NoChrome"
     ExtendClientAreaTitleBarHeightHint="-1"
-    Background="#881E90FF"
+    Background="#FFFFFFFF"
     TransparencyLevelHint="AcrylicBlur">
 ```
 
@@ -26,9 +26,9 @@ The window uses a 3-layer background system for depth:
 
 ### Layer 1: Window Background
 ```xaml
-Background="#881E90FF"
+Background="#FFFFFFFF"
 ```
-- Base color: Dodger Blue (`#1E90FF`)
+- Base color: Dodger Blue (`#FFFFFF`)
 - Alpha: 53% (`88`)
 - Purpose: Sets the main window tint
 
@@ -38,7 +38,7 @@ Background="#881E90FF"
     <ExperimentalAcrylicBorder.Material>
         <ExperimentalAcrylicMaterial
             BackgroundSource="Digger"
-            TintColor="#1E90FF"
+            TintColor="#FFFFFF"
             TintOpacity="0.5"
             MaterialOpacity="0.2"/>
     </ExperimentalAcrylicBorder.Material>

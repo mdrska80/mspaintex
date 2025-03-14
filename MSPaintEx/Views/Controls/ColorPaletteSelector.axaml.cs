@@ -35,7 +35,8 @@ namespace MSPaintEx.Views.Controls
                 Margin = new Thickness(1),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(1),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(40, 0, 0, 0)),
+                BorderBrush = Application.Current?.Resources["SystemControlForegroundBaseLowBrush"] as IBrush 
+                    ?? new SolidColorBrush(Color.FromArgb(40, 0, 0, 0)),
                 Content = border
             };
 

@@ -10,7 +10,42 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="MSPaintEx"
         Focusable="True"
-        KeyboardNavigation.IsTabStop="True">
+        KeyboardNavigation.IsTabStop="True"
+        WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="#FFFFFFFF"
+        TransparencyLevelHint="AcrylicBlur"
+        CanResize="True"
+        MinWidth="800"
+        MinHeight="600">
+
+    <Window.Styles>
+        <StyleInclude Source="/Controls/ModernButton.axaml"/>
+        
+        <!-- Use system colors for text elements -->
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        
+        <Style Selector="TextBox">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        
+        <Style Selector="ComboBox">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        
+        <Style Selector="NumericUpDown">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        
+        <!-- Menu styles -->
+        <Style Selector="MenuItem">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+    </Window.Styles>
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -18,152 +53,201 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <DockPanel LastChildFill="True">
-        <!-- Main Menu -->
-        <Menu DockPanel.Dock="Top" Background="#F0F0F0">
-            <MenuItem Header="_File">
-                <MenuItem Header="_New" InputGesture="Ctrl+N" Click="OnNewClick"/>
-                <MenuItem Header="_Open..." InputGesture="Ctrl+O" Click="OnOpenClick"/>
-                <MenuItem Header="_Save" InputGesture="Ctrl+S" Click="OnSaveClick"/>
-                <MenuItem Header="Save _As..." Click="OnSaveAsClick"/>
-                <Separator/>
-                <MenuItem Header="Print Pre_view"/>
-                <MenuItem Header="_Print..." InputGesture="Ctrl+P"/>
-                <Separator/>
-                <MenuItem Header="Set As Desktop _Background"/>
-                <Separator/>
-                <MenuItem Header="E_xit" InputGesture="Alt+F4" Click="OnExitClick"/>
-            </MenuItem>
-            
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo" InputGesture="Ctrl+Z" Click="OnUndoClick"/>
-                <MenuItem Header="_Redo" InputGesture="Ctrl+Y" Click="OnRedoClick"/>
-                <Separator/>
-                <MenuItem Header="Cu_t" InputGesture="Ctrl+X" Click="OnCutClick"/>
-                <MenuItem Header="_Copy" InputGesture="Ctrl+C" Click="OnCopyClick"/>
-                <MenuItem Header="_Paste" InputGesture="Ctrl+V" Click="OnPasteClick"/>
-                <MenuItem Header="C_lear Selection" InputGesture="Delete" Click="OnClearSelectionClick"/>
-                <Separator/>
-                <MenuItem Header="Select _All" InputGesture="Ctrl+A" Click="OnSelectAllClick"/>
-            </MenuItem>
-            
-            <MenuItem Header="_View">
-                <MenuItem Header="_Zoom">
-                    <MenuItem Header="100%" Click="OnZoomClick"/>
-                    <MenuItem Header="200%" Click="OnZoomClick"/>
-                    <MenuItem Header="400%" Click="OnZoomClick"/>
-                    <MenuItem Header="800%" Click="OnZoomClick"/>
-                    <Separator/>
-                    <MenuItem Header="Custom..." Click="OnZoomClick"/>
-                </MenuItem>
-                <MenuItem Header="_Grid Lines" InputGesture="Ctrl+G" Click="OnGridLinesClick"/>
-                <MenuItem Header="Status _Bar"/>
-                <MenuItem Header="_Rulers"/>
-            </MenuItem>
-            
-            <MenuItem Header="_Image">
-                <MenuItem Header="_Rotate/Flip">
-                    <MenuItem Header="_Rotate Right 90°" Click="OnRotateFlipClick"/>
-                    <MenuItem Header="Rotate _Left 90°" Click="OnRotateFlipClick"/>
-                    <MenuItem Header="Rotate _180°" Click="OnRotateFlipClick"/>
-                    <Separator/>
-                    <MenuItem Header="Flip _Horizontal" Click="OnRotateFlipClick"/>
-                    <MenuItem Header="Flip _Vertical" Click="OnRotateFlipClick"/>
-                </MenuItem>
-                <MenuItem Header="_Resize Canvas..." InputGesture="Ctrl+E" Click="OnResizeCanvasClick"/>
-                <MenuItem Header="_Resize/Skew..." Click="OnResizeSkewClick"/>
-                <MenuItem Header="_Canvas Size..." Click="OnCanvasSizeClick"/>
-                <Separator/>
-                <MenuItem Header="_Invert Colors" Click="OnInvertColorsClick"/>
-                <MenuItem Header="_Grayscale" Click="OnGrayscaleClick"/>
-            </MenuItem>
-            
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About MSPaintEx..." Click="OnAboutClick"/>
-            </MenuItem>
-        </Menu>
+    <Panel>
+        <!-- Layer 2: Acrylic Effect -->
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="{DynamicResource SystemAccentColor}"
+                    TintOpacity="0.5"
+                    MaterialOpacity="0.2"/>
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
 
-        <!-- Top toolbar -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#F0F0F0" Margin="5" Height="40">
-            <TextBlock Text="Stroke Width: " VerticalAlignment="Center" Margin="5,0"/>
-            <NumericUpDown x:Name="StrokeWidth" 
-                          Value="2"
-                          Minimum="1"
-                          Maximum="50"
-                          ValueChanged="OnStrokeWidthChanged"
-                          Width="100"
-                          MinWidth="100"
-                          Padding="8,0"
-                          HorizontalContentAlignment="Left"
-                          VerticalContentAlignment="Center"
-                          FormatString="0 px"
-                          ClipValueToMinMax="True"
-                          ShowButtonSpinner="True"
-                          AllowSpin="True"
-                          Increment="1"/>
+        <!-- Layer 3: Contrast Gradient -->
+        <Panel>
+            <Panel.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Offset="0" Color="#15104080"/>
+                    <GradientStop Offset="1" Color="#25104080"/>
+                </LinearGradientBrush>
+            </Panel.Background>
+        </Panel>
 
-            <!-- Zoom controls -->
-            <Separator Margin="10,0"/>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Zoom:" 
-                          VerticalAlignment="Center" 
-                          Margin="0,0,5,0"/>
-                <TextBlock Name="ZoomLevel"
-                          Text="100%"
-                          Width="50"
-                          VerticalAlignment="Center"/>
-                <Button Content="100%" 
-                        Click="OnResetZoom"
-                        Margin="5,0,0,0"/>
+        <DockPanel LastChildFill="True">
+            <!-- Custom Title Bar -->
+            <Grid Height="32" 
+                  Background="Transparent"
+                  PointerPressed="OnTitleBarPointerPressed"
+                  DockPanel.Dock="Top">
+                <DockPanel LastChildFill="True">
+                    <Button Classes="modern-close"
+                            DockPanel.Dock="Right"
+                            Click="OnExitClick"/>
+                    <Button Classes="modern secondary"
+                            DockPanel.Dock="Right"
+                            Click="OnMaximizeClick"
+                            Content="□"/>
+                    <Button Classes="modern secondary"
+                            DockPanel.Dock="Right"
+                            Click="OnMinimizeClick"
+                            Content="_"/>
+                    <TextBlock Text="MSPaintEx"
+                              FontSize="13"
+                              Margin="16,0"
+                              VerticalAlignment="Center"/>
+                </DockPanel>
+            </Grid>
+
+            <!-- Main Menu -->
+            <Menu DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_New" InputGesture="Ctrl+N" Click="OnNewClick"/>
+                    <MenuItem Header="_Open..." InputGesture="Ctrl+O" Click="OnOpenClick"/>
+                    <MenuItem Header="_Save" InputGesture="Ctrl+S" Click="OnSaveClick"/>
+                    <MenuItem Header="Save _As..." Click="OnSaveAsClick"/>
+                    <Separator/>
+                    <MenuItem Header="Print Pre_view"/>
+                    <MenuItem Header="_Print..." InputGesture="Ctrl+P"/>
+                    <Separator/>
+                    <MenuItem Header="Set As Desktop _Background"/>
+                    <Separator/>
+                    <MenuItem Header="E_xit" InputGesture="Alt+F4" Click="OnExitClick"/>
+                </MenuItem>
+                
+                <MenuItem Header="_Edit">
+                    <MenuItem Header="_Undo" InputGesture="Ctrl+Z" Click="OnUndoClick"/>
+                    <MenuItem Header="_Redo" InputGesture="Ctrl+Y" Click="OnRedoClick"/>
+                    <Separator/>
+                    <MenuItem Header="Cu_t" InputGesture="Ctrl+X" Click="OnCutClick"/>
+                    <MenuItem Header="_Copy" InputGesture="Ctrl+C" Click="OnCopyClick"/>
+                    <MenuItem Header="_Paste" InputGesture="Ctrl+V" Click="OnPasteClick"/>
+                    <MenuItem Header="C_lear Selection" InputGesture="Delete" Click="OnClearSelectionClick"/>
+                    <Separator/>
+                    <MenuItem Header="Select _All" InputGesture="Ctrl+A" Click="OnSelectAllClick"/>
+                </MenuItem>
+                
+                <MenuItem Header="_View">
+                    <MenuItem Header="_Zoom">
+                        <MenuItem Header="100%" Click="OnZoomClick"/>
+                        <MenuItem Header="200%" Click="OnZoomClick"/>
+                        <MenuItem Header="400%" Click="OnZoomClick"/>
+                        <MenuItem Header="800%" Click="OnZoomClick"/>
+                        <Separator/>
+                        <MenuItem Header="Custom..." Click="OnZoomClick"/>
+                    </MenuItem>
+                    <MenuItem Header="_Grid Lines" InputGesture="Ctrl+G" Click="OnGridLinesClick"/>
+                    <MenuItem Header="Status _Bar"/>
+                    <MenuItem Header="_Rulers"/>
+                </MenuItem>
+                
+                <MenuItem Header="_Image">
+                    <MenuItem Header="_Rotate/Flip">
+                        <MenuItem Header="_Rotate Right 90°" Click="OnRotateFlipClick"/>
+                        <MenuItem Header="Rotate _Left 90°" Click="OnRotateFlipClick"/>
+                        <MenuItem Header="Rotate _180°" Click="OnRotateFlipClick"/>
+                        <Separator/>
+                        <MenuItem Header="Flip _Horizontal" Click="OnRotateFlipClick"/>
+                        <MenuItem Header="Flip _Vertical" Click="OnRotateFlipClick"/>
+                    </MenuItem>
+                    <MenuItem Header="_Resize Canvas..." InputGesture="Ctrl+E" Click="OnResizeCanvasClick"/>
+                    <MenuItem Header="_Resize/Skew..." Click="OnResizeSkewClick"/>
+                    <MenuItem Header="_Canvas Size..." Click="OnCanvasSizeClick"/>
+                    <Separator/>
+                    <MenuItem Header="_Invert Colors" Click="OnInvertColorsClick"/>
+                    <MenuItem Header="_Grayscale" Click="OnGrayscaleClick"/>
+                </MenuItem>
+                
+                <MenuItem Header="_Help">
+                    <MenuItem Header="_About MSPaintEx..." Click="OnAboutClick"/>
+                </MenuItem>
+            </Menu>
+
+            <!-- Top toolbar -->
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Margin="5" Height="40">
+                <TextBlock Text="Stroke Width: " VerticalAlignment="Center" Margin="5,0" FontSize="14"/>
+                <NumericUpDown x:Name="StrokeWidth" 
+                              Value="2"
+                              Minimum="1"
+                              Maximum="50"
+                              ValueChanged="OnStrokeWidthChanged"
+                              Width="100"
+                              MinWidth="100"
+                              Padding="8,0"
+                              HorizontalContentAlignment="Left"
+                              VerticalContentAlignment="Center"
+                              FormatString="0 px"
+                              ClipValueToMinMax="True"
+                              ShowButtonSpinner="True"
+                              AllowSpin="True"
+                              Increment="1"/>
+
+                <!-- Zoom controls -->
+                <Separator Margin="10,0"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Zoom:" 
+                              VerticalAlignment="Center" 
+                              Margin="0,0,5,0"
+                              FontSize="14"/>
+                    <TextBlock Name="ZoomLevel"
+                              Text="100%"
+                              Width="50"
+                              VerticalAlignment="Center"
+                              FontSize="14"/>
+                    <Button Content="100%" 
+                            Click="OnResetZoom"
+                            Margin="5,0,0,0"
+                            Classes="modern"/>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
 
-        <!-- Left color palette -->
-        <controls:ColorPaletteSelector 
-            DockPanel.Dock="Left" 
-            x:Name="ColorSelector"
-            ColorSelected="OnColorSelected"
-            Margin="5"/>
+            <!-- Left color palette -->
+            <controls:ColorPaletteSelector 
+                DockPanel.Dock="Left" 
+                x:Name="ColorSelector"
+                ColorSelected="OnColorSelected"
+                Margin="5"/>
 
-        <!-- Main content area -->
-        <Grid Grid.Row="2">
-            <!-- Canvas container with zoom and centering -->
-            <ScrollViewer Name="CanvasScrollViewer"
-                         HorizontalScrollBarVisibility="Auto" 
-                         VerticalScrollBarVisibility="Auto"
-                         Background="LightGray">
-                <!-- Outer container that can grow -->
-                <Grid Name="ScrollContent">
-                    <Grid Name="CanvasContainer" 
-                          Width="800"
-                          Height="600"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          RenderOptions.BitmapInterpolationMode="None">
-                        <!-- ScaleTransform for zoom -->
-                        <Grid.RenderTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1"/>
-                        </Grid.RenderTransform>
-                        
-                        <!-- White background for canvas area -->
-                        <Rectangle Fill="White"
-                                 Width="800"
-                                 Height="600"/>
-                        
-                        <!-- Actual drawing canvas -->
-                        <controls:DrawingCanvas Name="Canvas"
-                                              Width="800"
-                                              Height="600"
-                                              Background="Transparent"
-                                              StrokeThickness="2"
-                                              RenderOptions.BitmapInterpolationMode="None"
-                                              RenderOptions.EdgeMode="Aliased"
-                                              Focusable="True"
-                                              KeyboardNavigation.IsTabStop="True"/>
+            <!-- Main content area -->
+            <Grid Grid.Row="2" Margin="40,20,40,20">
+                <!-- Canvas container with zoom and centering -->
+                <ScrollViewer Name="CanvasScrollViewer"
+                             HorizontalScrollBarVisibility="Auto" 
+                             VerticalScrollBarVisibility="Auto"
+                             Background="LightGray">
+                    <!-- Outer container that can grow -->
+                    <Grid Name="ScrollContent">
+                        <Grid Name="CanvasContainer" 
+                              Width="800"
+                              Height="600"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              RenderOptions.BitmapInterpolationMode="None">
+                            <!-- ScaleTransform for zoom -->
+                            <Grid.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Grid.RenderTransform>
+                            
+                            <!-- White background for canvas area -->
+                            <Rectangle Fill="White"
+                                     Width="800"
+                                     Height="600"/>
+                            
+                            <!-- Actual drawing canvas -->
+                            <controls:DrawingCanvas Name="Canvas"
+                                                  Width="800"
+                                                  Height="600"
+                                                  Background="Transparent"
+                                                  StrokeThickness="2"
+                                                  RenderOptions.BitmapInterpolationMode="None"
+                                                  RenderOptions.EdgeMode="Aliased"
+                                                  Focusable="True"
+                                                  KeyboardNavigation.IsTabStop="True"/>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </ScrollViewer>
-        </Grid>
-    </DockPanel>
-
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </Panel>
 </Window>

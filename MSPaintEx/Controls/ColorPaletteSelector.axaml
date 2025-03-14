@@ -5,8 +5,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="266" d:DesignHeight="450"
              x:Class="MSPaintEx.Controls.ColorPaletteSelector"
-             Background="#F0F0F0"
+             Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
              Width="266">
+    <UserControl.Styles>
+        <Style Selector="SelectableTextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+    </UserControl.Styles>
+    
     <DockPanel Margin="0">
         <!-- Current color display at top -->
         <Grid DockPanel.Dock="Top" Height="50" Margin="1,1,1,5">

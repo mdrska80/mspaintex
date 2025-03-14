@@ -157,7 +157,7 @@ namespace MSPaintEx.Controls
                 // Add selection indicator
                 var selectionRect = new Rectangle
                 {
-                    Stroke = Brushes.White,
+                    Stroke = Application.Current?.Resources["SystemControlForegroundBaseHighBrush"] as IBrush ?? Brushes.White,
                     StrokeThickness = 2,
                     Margin = new Thickness(2),
                     IsHitTestVisible = false

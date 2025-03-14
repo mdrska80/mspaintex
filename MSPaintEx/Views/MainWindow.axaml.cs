@@ -484,5 +484,46 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        try
+        {
+            LogService.LogInfo(LOG_SOURCE, "Title bar pointer pressed, beginning window drag");
+            BeginMoveDrag(e);
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Failed to begin window drag", ex);
+        }
+    }
+
+    private void OnMinimizeClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LogService.LogInfo(LOG_SOURCE, "Minimizing window");
+            this.WindowState = WindowState.Minimized;
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Failed to minimize window", ex);
+        }
+    }
+
+    private void OnMaximizeClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LogService.LogInfo(LOG_SOURCE, "Toggling window maximize state");
+            this.WindowState = this.WindowState == WindowState.Maximized 
+                ? WindowState.Normal 
+                : WindowState.Maximized;
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Failed to toggle maximize window state", ex);
+        }
+    }
+
     #endregion
 }
