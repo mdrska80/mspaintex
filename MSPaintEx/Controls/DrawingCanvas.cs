@@ -52,7 +52,8 @@ namespace MSPaintEx.Controls
                 StrokeWidth = (float)StrokeThickness,
                 StrokeJoin = SKStrokeJoin.Round,
                 StrokeCap = SKStrokeCap.Round,
-                IsAntialias = true
+                // Disable antialiasing for pixel-perfect drawing
+                IsAntialias = false
             };
         }
 

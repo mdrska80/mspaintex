@@ -16,10 +16,11 @@ public partial class MainWindow : Window
     private ScaleTransform? _canvasScale;
     private TextBlock? _zoomLevel;
     private Grid? _canvasContainer;
+    private Grid? _scrollContent;
     private ScrollViewer? _scrollViewer;
     private decimal _currentZoom = 100m;
     private const decimal MIN_ZOOM = 10m;
-    private const decimal MAX_ZOOM = 1000m;
+    private const decimal MAX_ZOOM = 3200m;
 
     public MainWindow()
     {
@@ -29,6 +30,7 @@ public partial class MainWindow : Window
         _canvas = this.FindControl<DrawingCanvas>("Canvas");
         _currentColorDisplay = this.FindControl<Rectangle>("CurrentColorDisplay");
         _canvasContainer = this.FindControl<Grid>("CanvasContainer");
+        _scrollContent = this.FindControl<Grid>("ScrollContent");
         _zoomLevel = this.FindControl<TextBlock>("ZoomLevel");
         _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
 
@@ -57,6 +59,13 @@ public partial class MainWindow : Window
             double zoomFactor = (double)_currentZoom / 100.0;
             _canvasScale.ScaleX = zoomFactor;
             _canvasScale.ScaleY = zoomFactor;
+
+            // Update the scroll content size to match the zoomed canvas
+            if (_scrollContent != null)
+            {
+                _scrollContent.Width = 800 * zoomFactor;
+                _scrollContent.Height = 600 * zoomFactor;
+            }
         }
     }
 

@@ -66,24 +66,33 @@
                          HorizontalScrollBarVisibility="Auto" 
                          VerticalScrollBarVisibility="Auto"
                          Background="LightGray">
-                <Grid Name="CanvasContainer" 
-                      HorizontalAlignment="Center" 
-                      VerticalAlignment="Center"
-                      RenderOptions.BitmapInterpolationMode="None">
-                    <!-- ScaleTransform for zoom -->
-                    <Grid.RenderTransform>
-                        <ScaleTransform ScaleX="1" ScaleY="1"/>
-                    </Grid.RenderTransform>
-                    
-                    <!-- White background for canvas area -->
-                    <Rectangle Fill="White"/>
-                    
-                    <!-- Actual drawing canvas -->
-                    <controls:DrawingCanvas Name="Canvas"
-                                          Width="800"
-                                          Height="600"
-                                          Background="Transparent"
-                                          StrokeThickness="2"/>
+                <!-- Outer container that can grow -->
+                <Grid Name="ScrollContent">
+                    <Grid Name="CanvasContainer" 
+                          Width="800"
+                          Height="600"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          RenderOptions.BitmapInterpolationMode="None">
+                        <!-- ScaleTransform for zoom -->
+                        <Grid.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1"/>
+                        </Grid.RenderTransform>
+                        
+                        <!-- White background for canvas area -->
+                        <Rectangle Fill="White"
+                                 Width="800"
+                                 Height="600"/>
+                        
+                        <!-- Actual drawing canvas -->
+                        <controls:DrawingCanvas Name="Canvas"
+                                              Width="800"
+                                              Height="600"
+                                              Background="Transparent"
+                                              StrokeThickness="2"
+                                              RenderOptions.BitmapInterpolationMode="None"
+                                              RenderOptions.EdgeMode="Aliased"/>
+                    </Grid>
                 </Grid>
             </ScrollViewer>
         </Grid>
