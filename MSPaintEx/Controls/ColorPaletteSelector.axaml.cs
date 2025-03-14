@@ -13,6 +13,9 @@ namespace MSPaintEx.Controls
     {
         // Event that will be raised when a color is selected
         public event EventHandler<Color>? ColorSelected;
+        
+        // Track the currently selected button
+        private Button? _selectedButton;
 
         // Base colors for each row
         private readonly Dictionary<string, Color> BaseColors = new()
@@ -136,21 +139,57 @@ namespace MSPaintEx.Controls
             );
         }
 
+        private void UpdateSelectedButton(Button newSelection)
+        {
+            // Remove selection from previous button
+            if (_selectedButton != null)
+            {
+                if (_selectedButton.Content is Grid oldGrid)
+                {
+                    oldGrid.Children.RemoveAt(1); // Remove selection rectangle
+                }
+            }
+
+            // Update selection on new button
+            _selectedButton = newSelection;
+            if (_selectedButton.Content is Grid newGrid)
+            {
+                // Add selection indicator
+                var selectionRect = new Rectangle
+                {
+                    Stroke = Brushes.White,
+                    StrokeThickness = 2,
+                    Margin = new Thickness(2),
+                    IsHitTestVisible = false
+                };
+                newGrid.Children.Add(selectionRect);
+            }
+        }
+
         private Button CreateColorButton(Color color)
         {
+            var grid = new Grid
+            {
+                Background = Brushes.Transparent
+            };
+
+            var colorRectangle = new Rectangle
+            {
+                Fill = new SolidColorBrush(color),
+                Height = 34
+            };
+
+            grid.Children.Add(colorRectangle);
+
             var button = new Button
             {
                 Background = Brushes.Transparent,
                 Padding = new Thickness(0),
-                Margin = new Thickness(0),
+                Margin = new Thickness(1),
                 BorderThickness = new Thickness(0),
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
                 Tag = color.ToString(),
-                Content = new Rectangle
-                {
-                    Fill = new SolidColorBrush(color),
-                    Height = 36
-                }
+                Content = grid
             };
 
             button.Click += OnColorButtonClick;
@@ -163,6 +202,9 @@ namespace MSPaintEx.Controls
             {
                 // Convert hex to Color
                 var color = Color.Parse(colorHex);
+                
+                // Update selection
+                UpdateSelectedButton(button);
                 
                 // Update the current color display
                 if (CurrentColorDisplay != null)
@@ -191,6 +233,30 @@ namespace MSPaintEx.Controls
                 if (CurrentColorDisplay != null)
                 {
                     CurrentColorDisplay.Fill = new SolidColorBrush(value);
+                    
+                    // Find and update button with matching color
+                    if (_selectedButton?.Tag is string currentColorHex)
+                    {
+                        var newColorHex = value.ToString();
+                        if (currentColorHex != newColorHex)
+                        {
+                            var colorGrid = this.FindControl<StackPanel>("ColorGrid");
+                            if (colorGrid != null)
+                            {
+                                foreach (Grid row in colorGrid.Children)
+                                {
+                                    foreach (Button button in row.Children)
+                                    {
+                                        if (button.Tag?.ToString() == newColorHex)
+                                        {
+                                            UpdateSelectedButton(button);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     
                     // Update text color
                     if (CurrentColorText != null)

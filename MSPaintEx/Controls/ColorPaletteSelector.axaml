@@ -3,12 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="252" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="266" d:DesignHeight="450"
              x:Class="MSPaintEx.Controls.ColorPaletteSelector">
     <Border BorderBrush="Gray" 
             BorderThickness="1" 
             Background="#F0F0F0"
-            Width="252">
+            Width="266">
         <DockPanel LastChildFill="True" Margin="0">
             <!-- Current color display -->
             <Border DockPanel.Dock="Top" 
