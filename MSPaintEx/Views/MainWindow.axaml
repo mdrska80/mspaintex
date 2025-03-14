@@ -35,6 +35,21 @@
                           ShowButtonSpinner="True"
                           AllowSpin="True"
                           Increment="1"/>
+
+            <!-- Zoom controls -->
+            <Separator Margin="10,0"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Zoom:" 
+                          VerticalAlignment="Center" 
+                          Margin="0,0,5,0"/>
+                <TextBlock Name="ZoomLevel"
+                          Text="100%"
+                          Width="50"
+                          VerticalAlignment="Center"/>
+                <Button Content="100%" 
+                        Click="OnResetZoom"
+                        Margin="5,0,0,0"/>
+            </StackPanel>
         </StackPanel>
 
         <!-- Left color palette -->
@@ -44,15 +59,34 @@
             ColorSelected="OnColorSelected"
             Margin="5"/>
 
-        <!-- Main canvas area -->
-        <Border BorderBrush="Gray" 
-                BorderThickness="1" 
-                Margin="5"
-                Background="White">
-            <controls:DrawingCanvas x:Name="Canvas"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Stretch"/>
-        </Border>
+        <!-- Main content area -->
+        <Grid Grid.Row="2">
+            <!-- Canvas container with zoom and centering -->
+            <ScrollViewer Name="CanvasScrollViewer"
+                         HorizontalScrollBarVisibility="Auto" 
+                         VerticalScrollBarVisibility="Auto"
+                         Background="LightGray">
+                <Grid Name="CanvasContainer" 
+                      HorizontalAlignment="Center" 
+                      VerticalAlignment="Center"
+                      RenderOptions.BitmapInterpolationMode="None">
+                    <!-- ScaleTransform for zoom -->
+                    <Grid.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Grid.RenderTransform>
+                    
+                    <!-- White background for canvas area -->
+                    <Rectangle Fill="White"/>
+                    
+                    <!-- Actual drawing canvas -->
+                    <controls:DrawingCanvas Name="Canvas"
+                                          Width="800"
+                                          Height="600"
+                                          Background="Transparent"
+                                          StrokeThickness="2"/>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
     </DockPanel>
 
 </Window>

@@ -3,6 +3,8 @@ using MSPaintEx.Controls;
 using Avalonia.Media;
 using Avalonia.Interactivity;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
+using System;
 
 namespace MSPaintEx.Views;
 
@@ -11,6 +13,13 @@ public partial class MainWindow : Window
     // Reference to our drawing canvas
     private DrawingCanvas? _canvas;
     private Rectangle? _currentColorDisplay;
+    private ScaleTransform? _canvasScale;
+    private TextBlock? _zoomLevel;
+    private Grid? _canvasContainer;
+    private ScrollViewer? _scrollViewer;
+    private decimal _currentZoom = 100m;
+    private const decimal MIN_ZOOM = 10m;
+    private const decimal MAX_ZOOM = 1000m;
 
     public MainWindow()
     {
@@ -19,6 +28,46 @@ public partial class MainWindow : Window
         // Get reference to the canvas after initialization
         _canvas = this.FindControl<DrawingCanvas>("Canvas");
         _currentColorDisplay = this.FindControl<Rectangle>("CurrentColorDisplay");
+        _canvasContainer = this.FindControl<Grid>("CanvasContainer");
+        _zoomLevel = this.FindControl<TextBlock>("ZoomLevel");
+        _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
+
+        if (_canvasContainer != null)
+        {
+            _canvasScale = _canvasContainer.RenderTransform as ScaleTransform;
+        }
+
+        if (_scrollViewer != null)
+        {
+            _scrollViewer.PointerWheelChanged += OnScrollViewerPointerWheelChanged;
+        }
+    }
+
+    private void UpdateZoom(decimal newZoom)
+    {
+        _currentZoom = Math.Max(MIN_ZOOM, Math.Min(MAX_ZOOM, newZoom));
+        
+        if (_zoomLevel != null)
+        {
+            _zoomLevel.Text = $"{_currentZoom:0}%";
+        }
+
+        if (_canvasScale != null)
+        {
+            double zoomFactor = (double)_currentZoom / 100.0;
+            _canvasScale.ScaleX = zoomFactor;
+            _canvasScale.ScaleY = zoomFactor;
+        }
+    }
+
+    private void OnScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            e.Handled = true;
+            var delta = e.Delta.Y > 0 ? 10m : -10m; // 10% increment/decrement
+            UpdateZoom(_currentZoom + delta);
+        }
     }
 
     private void OnColorButtonClick(object? sender, RoutedEventArgs e)
@@ -60,5 +109,10 @@ public partial class MainWindow : Window
         {
             Canvas.SetColor(color);
         }
+    }
+
+    private void OnResetZoom(object? sender, RoutedEventArgs e)
+    {
+        UpdateZoom(100m);
     }
 }

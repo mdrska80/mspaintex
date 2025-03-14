@@ -7,25 +7,34 @@ using System;
 using Avalonia.VisualTree;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;  // Add this for mouse handling
+using System.Collections.Generic;
 
 namespace MSPaintEx.Controls
 {
     // DrawingCanvas: Custom control that provides basic drawing functionality
     public class DrawingCanvas : TemplatedControl  // Change to TemplatedControl which has Background property
     {
+        // Define StrokeThickness as an AvaloniaProperty
+        public static readonly StyledProperty<double> StrokeThicknessProperty =
+            AvaloniaProperty.Register<DrawingCanvas, double>(nameof(StrokeThickness), 1.0);
+
+        public double StrokeThickness
+        {
+            get => GetValue(StrokeThicknessProperty);
+            set => SetValue(StrokeThicknessProperty, value);
+        }
+
         // The bitmap that represents our drawing surface
         private SKBitmap? _bitmap;
         
         // Drawing settings
-        private SKColor _currentColor = SKColors.Black;  // Default color
-        private float _strokeWidth = 2f;                 // Default stroke width
-        
+        private SKPaint _paint;
+        private SKPoint? _lastPoint;  // Track last point for drawing
+        private bool _isDrawing;      // Track if we're currently drawing
+
         // The canvas size properties
         private const int DEFAULT_WIDTH = 800;
         private const int DEFAULT_HEIGHT = 600;
-
-        private SKPoint? _lastPoint;  // Track last point for drawing
-        private bool _isDrawing;      // Track if we're currently drawing
 
         public DrawingCanvas()
         {
@@ -35,6 +44,16 @@ namespace MSPaintEx.Controls
             this.PointerPressed += OnPointerPressed;
             this.PointerMoved += OnPointerMoved;
             this.PointerReleased += OnPointerReleased;
+
+            _paint = new SKPaint
+            {
+                Style = SKPaintStyle.Stroke,
+                Color = SKColors.Black,
+                StrokeWidth = (float)StrokeThickness,
+                StrokeJoin = SKStrokeJoin.Round,
+                StrokeCap = SKStrokeCap.Round,
+                IsAntialias = true
+            };
         }
 
         // Override property changed to handle bounds changes
@@ -81,18 +100,7 @@ namespace MSPaintEx.Controls
 
             using (var canvas = new SKCanvas(_bitmap))
             {
-                using (var paint = new SKPaint
-                {
-                    Color = _currentColor,
-                    StrokeWidth = _strokeWidth,
-                    StrokeCap = SKStrokeCap.Round,
-                    StrokeJoin = SKStrokeJoin.Round,
-                    Style = SKPaintStyle.Stroke,
-                    IsAntialias = true  // Add antialiasing for smoother lines
-                })
-                {
-                    canvas.DrawLine(_lastPoint.Value, currentPoint, paint);
-                }
+                canvas.DrawLine(_lastPoint.Value, currentPoint, _paint);
             }
 
             _lastPoint = currentPoint;
@@ -109,15 +117,19 @@ namespace MSPaintEx.Controls
         // Method to set the current drawing color
         public void SetColor(Color color)
         {
-            _currentColor = new SKColor(color.R, color.G, color.B, color.A);
+            if (_paint != null)
+            {
+                _paint.Color = new SKColor(color.R, color.G, color.B, color.A);
+            }
         }
 
         // Method to set the stroke width
         public void SetStrokeWidth(float width)
         {
-            if (width > 0)
+            StrokeThickness = width;
+            if (_paint != null)
             {
-                _strokeWidth = width;
+                _paint.StrokeWidth = width;
             }
         }
 
