@@ -407,9 +407,11 @@ public partial class MainWindow : Window
         // TODO: Implement grayscale conversion
     }
 
-    private void OnAboutClick(object? sender, RoutedEventArgs e)
+    private async void OnAboutClick(object sender, RoutedEventArgs e)
     {
-        // TODO: Show about dialog
+        var about = new AboutWindow();
+        LogService.LogInfo("MainWindow", "Opening About dialog");
+        await about.ShowDialog(this);
     }
 
     #endregion

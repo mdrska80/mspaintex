@@ -1,0 +1,526 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20" Background="#E6103562">
+            <StackPanel Spacing="20">
+                <Button Classes="modern" Content="Modern Button"/>
+                <Button Classes="modern accent" Content="Accent Button"/>
+                <Button Classes="modern info" Content="Info Button"/>
+                <Button Classes="modern success" Content="Success Button"/>
+                <Button Classes="modern warning" Content="Warning Button"/>
+                <Button Classes="modern danger" Content="Danger Button"/>
+                <Button Classes="modern secondary" Content="Secondary Button"/>
+                <Button Classes="modern-close" Content="✕"/>
+            </StackPanel>
+        </Border>
+    </Design.PreviewWith>
+
+    <Style Selector="Button.modern">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#E6FFFFFF"/>
+                    <GradientStop Offset="1" Color="#D9FFFFFF"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    Padding="20,10"
+                                    FontWeight="{TemplateBinding FontWeight}"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.modern /template/ Border#PART_Border">
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#E6FFFFFF"/>
+                                <GradientStop Offset="1" Color="#D9FFFFFF"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#F2FFFFFF"/>
+                                <GradientStop Offset="1" Color="#E6FFFFFF"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#E6FFFFFF"/>
+                                <GradientStop Offset="1" Color="#D9FFFFFF"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <Style Selector="Button.modern:pointerover /template/ Border#PART_Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#F2FFFFFF"/>
+                    <GradientStop Offset="1" Color="#E6FFFFFF"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#80FFFFFF"/>
+        <Setter Property="ScaleTransform.ScaleX" Value="1.05"/>
+        <Setter Property="ScaleTransform.ScaleY" Value="1.05"/>
+    </Style>
+
+    <Style Selector="Button.modern:pressed /template/ Border#PART_Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#D9FFFFFF"/>
+                    <GradientStop Offset="1" Color="#CCFFFFFF"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ScaleTransform.ScaleX" Value="0.98"/>
+        <Setter Property="ScaleTransform.ScaleY" Value="0.98"/>
+    </Style>
+
+    <Style Selector="Button.modern.accent">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.modern.accent /template/ Border#PART_Border">
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF00B2FF"/>
+                                <GradientStop Offset="1" Color="#FF0091EA"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF40C4FF"/>
+                                <GradientStop Offset="1" Color="#FF00B2FF"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF00B2FF"/>
+                                <GradientStop Offset="1" Color="#FF0091EA"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <Style Selector="Button.modern.accent:pointerover /template/ Border#PART_Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#FF40C4FF"/>
+                    <GradientStop Offset="1" Color="#FF00B2FF"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ScaleTransform.ScaleX" Value="1.05"/>
+        <Setter Property="ScaleTransform.ScaleY" Value="1.05"/>
+    </Style>
+
+    <Style Selector="Button.modern.accent:pressed /template/ Border#PART_Border">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#FF0091EA"/>
+                    <GradientStop Offset="1" Color="#FF0070C0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ScaleTransform.ScaleX" Value="0.98"/>
+        <Setter Property="ScaleTransform.ScaleY" Value="0.98"/>
+    </Style>
+
+    <Style Selector="Button.modern-close">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderThickness="0"
+                        CornerRadius="0">
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    Padding="0"
+                                    FontWeight="Normal"
+                                    FontSize="16"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#60FF4040"/>
+                    <GradientStop Offset="1" Color="#50FF3030"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="Width" Value="46"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.modern-close:pointerover">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#FFFF5050"/>
+                    <GradientStop Offset="1" Color="#FFFF4040"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.modern-close:pressed">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                    <GradientStop Offset="0" Color="#FFDD2020"/>
+                    <GradientStop Offset="1" Color="#FFCC1010"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Info button - Blue tones -->
+    <Style Selector="Button.modern.info">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.modern.info /template/ Border#PART_Border">
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF0288D1"/>
+                                <GradientStop Offset="1" Color="#FF0277BD"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF039BE5"/>
+                                <GradientStop Offset="1" Color="#FF0288D1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF0288D1"/>
+                                <GradientStop Offset="1" Color="#FF0277BD"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <!-- Success button - Green tones -->
+    <Style Selector="Button.modern.success">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.modern.success /template/ Border#PART_Border">
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF43A047"/>
+                                <GradientStop Offset="1" Color="#FF388E3C"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF66BB6A"/>
+                                <GradientStop Offset="1" Color="#FF43A047"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF43A047"/>
+                                <GradientStop Offset="1" Color="#FF388E3C"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <!-- Warning button - Orange/Yellow tones -->
+    <Style Selector="Button.modern.warning">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.modern.warning /template/ Border#PART_Border">
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FFFB8C00"/>
+                                <GradientStop Offset="1" Color="#FFF57C00"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FFFFA726"/>
+                                <GradientStop Offset="1" Color="#FFFB8C00"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FFFB8C00"/>
+                                <GradientStop Offset="1" Color="#FFF57C00"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <!-- Danger button - Red tones -->
+    <Style Selector="Button.modern.danger">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.modern.danger /template/ Border#PART_Border">
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FFF44336"/>
+                                <GradientStop Offset="1" Color="#FFE53935"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FFEF5350"/>
+                                <GradientStop Offset="1" Color="#FFF44336"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FFF44336"/>
+                                <GradientStop Offset="1" Color="#FFE53935"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
+    <!-- Secondary button - Gray tones -->
+    <Style Selector="Button.modern.secondary">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.modern.secondary /template/ Border#PART_Border">
+        <Style.Animations>
+            <Animation Duration="0:0:3" 
+                      IterationCount="Infinite" 
+                      PlaybackDirection="Normal"
+                      FillMode="Both"
+                      Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF757575"/>
+                                <GradientStop Offset="1" Color="#FF616161"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.04"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.04"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF9E9E9E"/>
+                                <GradientStop Offset="1" Color="#FF757575"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="ScaleTransform.ScaleX" Value="1.0"/>
+                    <Setter Property="ScaleTransform.ScaleY" Value="1.0"/>
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0" Color="#FF757575"/>
+                                <GradientStop Offset="1" Color="#FF616161"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+</Styles> 

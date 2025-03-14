@@ -1,0 +1,141 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MSPaintEx.Views.AboutWindow"
+        Title="About MSPaintEx"
+        Width="500"
+        Height="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="#881E90FF"
+        TransparencyLevelHint="AcrylicBlur">
+
+    <Window.Styles>
+        <StyleInclude Source="/Controls/ModernButton.axaml"/>
+    </Window.Styles>
+
+    <Panel>
+        <!-- Background blur with blueish gradient -->
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="#1E90FF"
+                    TintOpacity="0.5"
+                    MaterialOpacity="0.2"/>
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <!-- Additional contrast layer -->
+        <Panel>
+            <Panel.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Offset="0" Color="#15104080"/>
+                    <GradientStop Offset="1" Color="#25104080"/>
+                </LinearGradientBrush>
+            </Panel.Background>
+        </Panel>
+
+        <!-- Main content -->
+        <Grid RowDefinitions="Auto,*">
+            <!-- Custom title bar -->
+            <Grid Grid.Row="0" 
+                  Height="32" 
+                  Background="Transparent"
+                  PointerPressed="OnTitleBarPointerPressed">
+                
+                <DockPanel LastChildFill="True">
+                    <Button Classes="modern-close"
+                            DockPanel.Dock="Right"
+                            Content="✕"
+                            Click="OnCloseClick"/>
+                            
+                    <TextBlock Text="About MSPaintEx"
+                             FontSize="13"
+                             Foreground="#000000"
+                             VerticalAlignment="Center"
+                             Margin="16,0"
+                             IsHitTestVisible="False"/>
+                </DockPanel>
+            </Grid>
+
+            <!-- Content area -->
+            <Grid Grid.Row="1" Margin="40,20,40,20">
+                <StackPanel Spacing="16">
+                    <!-- App logo and name -->
+                    <StackPanel Orientation="Horizontal" 
+                              HorizontalAlignment="Left" 
+                              Spacing="15">
+                        <Border CornerRadius="8" 
+                                ClipToBounds="True"
+                                Background="#40FFFFFF">
+                            <Image Source="/Assets/avalonia-logo.ico" 
+                                   Width="64" 
+                                   Height="64"/>
+                        </Border>
+                        <StackPanel Spacing="5" 
+                                  VerticalAlignment="Center">
+                            <TextBlock Text="MSPaintEx"
+                                     Foreground="#000000"
+                                     FontSize="28"
+                                     FontWeight="Bold"/>
+                            <TextBlock Text="Version 1.0.0"
+                                     Foreground="#99000000"
+                                     FontSize="14"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Description -->
+                    <TextBlock Text="A modern recreation of MS Paint using Avalonia UI"
+                             Foreground="#000000"
+                             FontSize="16"
+                             TextWrapping="Wrap"/>
+
+                    <!-- Features -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Features"
+                                 Foreground="#000000"
+                                 FontSize="18"
+                                 FontWeight="SemiBold"/>
+                        <ItemsControl Margin="10,0,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="6"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <TextBlock Text="• Modern glass-effect UI"
+                                     Foreground="#CC000000"/>
+                            <TextBlock Text="• High-performance drawing canvas"
+                                     Foreground="#CC000000"/>
+                            <TextBlock Text="• Advanced color selection"
+                                     Foreground="#CC000000"/>
+                            <TextBlock Text="• Smooth zoom controls"
+                                     Foreground="#CC000000"/>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Copyright -->
+                    <TextBlock Text="© 2024 MSPaintEx"
+                             Foreground="#99000000"
+                             HorizontalAlignment="Center"
+                             Margin="0,10,0,0"/>
+
+                    <!-- Buttons -->
+                    <StackPanel Orientation="Horizontal" 
+                              HorizontalAlignment="Right" 
+                              Spacing="10"
+                              Margin="0,0,0,0">
+                        <Button Content="View Source"
+                                Classes="modern"
+                                Click="OnViewSourceClick"/>
+                        <Button Content="OK"
+                                Classes="modern accent"
+                                Click="OnOKClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Panel>
+</Window> 
