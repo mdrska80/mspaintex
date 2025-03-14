@@ -212,11 +212,14 @@ namespace MSPaintEx.Controls
                     CurrentColorDisplay.Fill = new SolidColorBrush(color);
                 }
 
-                // Update the text color based on the brightness of the selected color
-                if (CurrentColorText != null)
+                // Update color format displays
+                if (RgbText != null)
                 {
-                    var brightness = (color.R * 299 + color.G * 587 + color.B * 114) / 1000;
-                    CurrentColorText.Foreground = brightness > 128 ? Brushes.Black : Brushes.White;
+                    RgbText.Text = $"RGB({color.R},{color.G},{color.B})";
+                }
+                if (HexText != null)
+                {
+                    HexText.Text = color.ToString().ToUpper();
                 }
 
                 // Raise the color selected event
@@ -233,6 +236,16 @@ namespace MSPaintEx.Controls
                 if (CurrentColorDisplay != null)
                 {
                     CurrentColorDisplay.Fill = new SolidColorBrush(value);
+                    
+                    // Update color format displays
+                    if (RgbText != null)
+                    {
+                        RgbText.Text = $"RGB({value.R},{value.G},{value.B})";
+                    }
+                    if (HexText != null)
+                    {
+                        HexText.Text = value.ToString().ToUpper();
+                    }
                     
                     // Find and update button with matching color
                     if (_selectedButton?.Tag is string currentColorHex)
@@ -256,13 +269,6 @@ namespace MSPaintEx.Controls
                                 }
                             }
                         }
-                    }
-                    
-                    // Update text color
-                    if (CurrentColorText != null)
-                    {
-                        var brightness = (value.R * 299 + value.G * 587 + value.B * 114) / 1000;
-                        CurrentColorText.Foreground = brightness > 128 ? Brushes.Black : Brushes.White;
                     }
                 }
             }

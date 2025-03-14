@@ -4,36 +4,34 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="266" d:DesignHeight="450"
-             x:Class="MSPaintEx.Controls.ColorPaletteSelector">
-    <Border BorderBrush="Gray" 
-            BorderThickness="1" 
-            Background="#F0F0F0"
-            Width="266">
-        <DockPanel LastChildFill="True" Margin="0">
-            <!-- Current color display -->
-            <Border DockPanel.Dock="Top" 
-                    Height="50" 
-                    Margin="5"
-                    BorderBrush="Black"
-                    BorderThickness="1">
-                <Grid>
-                    <Rectangle x:Name="CurrentColorDisplay"
-                             Fill="Black"/>
-                    <TextBlock x:Name="CurrentColorText"
-                             Text="Current Color"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Bottom"
-                             Foreground="White"
-                             Margin="0,0,0,2"/>
-                </Grid>
-            </Border>
-
-            <!-- Color palette grid -->
-            <ScrollViewer Margin="0" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel x:Name="ColorGrid" Margin="0">
-                    <!-- Base colors will be populated from code -->
-                </StackPanel>
-            </ScrollViewer>
-        </DockPanel>
-    </Border>
+             x:Class="MSPaintEx.Controls.ColorPaletteSelector"
+             Background="#F0F0F0"
+             Width="266">
+    <DockPanel Margin="0">
+        <!-- Current color display at top -->
+        <Grid DockPanel.Dock="Top" Height="50" Margin="1,1,1,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="50"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" 
+                      Margin="5,0,0,0"
+                      VerticalAlignment="Center">
+                <SelectableTextBlock Name="RgbText" 
+                                   Text="RGB(0,0,0)"
+                                   FontSize="20"/>
+                <SelectableTextBlock Name="HexText"
+                                   Text="#000000"
+                                   FontSize="20"/>
+            </StackPanel>
+            <Rectangle Grid.Column="1" 
+                      Name="CurrentColorDisplay"
+                      Height="50"/>
+        </Grid>
+        
+        <!-- Color palette grid -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Margin="0">
+            <StackPanel Name="ColorGrid" Margin="0"/>
+        </ScrollViewer>
+    </DockPanel>
 </UserControl> 
