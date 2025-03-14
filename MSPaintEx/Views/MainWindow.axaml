@@ -17,6 +17,69 @@
     </Design.DataContext>
 
     <DockPanel LastChildFill="True">
+        <!-- Main Menu -->
+        <Menu DockPanel.Dock="Top" Background="#F0F0F0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" InputGesture="Ctrl+N" Click="OnNewClick"/>
+                <MenuItem Header="_Open..." InputGesture="Ctrl+O" Click="OnOpenClick"/>
+                <MenuItem Header="_Save" InputGesture="Ctrl+S" Click="OnSaveClick"/>
+                <MenuItem Header="Save _As..." Click="OnSaveAsClick"/>
+                <Separator/>
+                <MenuItem Header="Print Pre_view"/>
+                <MenuItem Header="_Print..." InputGesture="Ctrl+P"/>
+                <Separator/>
+                <MenuItem Header="Set As Desktop _Background"/>
+                <Separator/>
+                <MenuItem Header="E_xit" InputGesture="Alt+F4" Click="OnExitClick"/>
+            </MenuItem>
+            
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" InputGesture="Ctrl+Z" Click="OnUndoClick"/>
+                <MenuItem Header="_Redo" InputGesture="Ctrl+Y" Click="OnRedoClick"/>
+                <Separator/>
+                <MenuItem Header="Cu_t" InputGesture="Ctrl+X" Click="OnCutClick"/>
+                <MenuItem Header="_Copy" InputGesture="Ctrl+C" Click="OnCopyClick"/>
+                <MenuItem Header="_Paste" InputGesture="Ctrl+V" Click="OnPasteClick"/>
+                <MenuItem Header="C_lear Selection" InputGesture="Delete" Click="OnClearSelectionClick"/>
+                <Separator/>
+                <MenuItem Header="Select _All" InputGesture="Ctrl+A" Click="OnSelectAllClick"/>
+            </MenuItem>
+            
+            <MenuItem Header="_View">
+                <MenuItem Header="_Zoom">
+                    <MenuItem Header="100%" Click="OnZoomClick"/>
+                    <MenuItem Header="200%" Click="OnZoomClick"/>
+                    <MenuItem Header="400%" Click="OnZoomClick"/>
+                    <MenuItem Header="800%" Click="OnZoomClick"/>
+                    <Separator/>
+                    <MenuItem Header="Custom..." Click="OnZoomClick"/>
+                </MenuItem>
+                <MenuItem Header="_Grid Lines" InputGesture="Ctrl+G" Click="OnGridLinesClick"/>
+                <MenuItem Header="Status _Bar"/>
+                <MenuItem Header="_Rulers"/>
+            </MenuItem>
+            
+            <MenuItem Header="_Image">
+                <MenuItem Header="_Rotate/Flip">
+                    <MenuItem Header="_Rotate Right 90°" Click="OnRotateFlipClick"/>
+                    <MenuItem Header="Rotate _Left 90°" Click="OnRotateFlipClick"/>
+                    <MenuItem Header="Rotate _180°" Click="OnRotateFlipClick"/>
+                    <Separator/>
+                    <MenuItem Header="Flip _Horizontal" Click="OnRotateFlipClick"/>
+                    <MenuItem Header="Flip _Vertical" Click="OnRotateFlipClick"/>
+                </MenuItem>
+                <MenuItem Header="_Resize/Skew..." Click="OnResizeSkewClick"/>
+                <MenuItem Header="_Canvas Size..." Click="OnCanvasSizeClick"/>
+                <Separator/>
+                <MenuItem Header="_Invert Colors" Click="OnInvertColorsClick"/>
+                <MenuItem Header="_Grayscale" Click="OnGrayscaleClick"/>
+            </MenuItem>
+            
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About MSPaintEx..." Click="OnAboutClick"/>
+            </MenuItem>
+        </Menu>
+
         <!-- Top toolbar -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#F0F0F0" Margin="5" Height="40">
             <TextBlock Text="Stroke Width: " VerticalAlignment="Center" Margin="5,0"/>
