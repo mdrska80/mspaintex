@@ -29,6 +29,7 @@ public partial class MainWindow : Window
     private Grid? _canvasContainer;
     private Grid? _scrollContent;
     private ScrollViewer? _scrollViewer;
+    private StatusBar? _statusBar;
     private decimal _currentZoom = 100m;
     private const decimal MIN_ZOOM = 10m;
     private const decimal MAX_ZOOM = 3200m;
@@ -57,6 +58,7 @@ public partial class MainWindow : Window
             _scrollContent = this.FindControl<Grid>("ScrollContent");
             _zoomLevel = this.FindControl<TextBlock>("ZoomLevel");
             _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
+            _statusBar = this.FindControl<StatusBar>("StatusBar");
 
             if (_canvas == null)
             {
@@ -83,6 +85,11 @@ public partial class MainWindow : Window
                 LogService.LogError(LOG_SOURCE, "ScrollViewer control not found");
                 throw new InvalidOperationException("ScrollViewer not found");
             }
+            if (_statusBar == null)
+            {
+                LogService.LogError(LOG_SOURCE, "StatusBar control not found");
+                throw new InvalidOperationException("StatusBar not found");
+            }
 
             // Initialize canvas scale
             _canvasScale = _canvasContainer.RenderTransform as ScaleTransform;
@@ -100,6 +107,15 @@ public partial class MainWindow : Window
             
             // Subscribe to color selection events
             _canvas.ColorSelected += OnCanvasColorSelected;
+            
+            // Subscribe to coordinates changed event
+            _canvas.CoordinatesChanged += OnCanvasCoordinatesChanged;
+            
+            // Update status bar with initial canvas size
+            if (_statusBar != null && _canvas != null)
+            {
+                _statusBar.UpdateCanvasSize((int)_canvas.Width, (int)_canvas.Height);
+            }
 
             // Ensure keyboard shortcuts work by handling them directly
             this.KeyDown += (s, e) => 
@@ -306,6 +322,12 @@ public partial class MainWindow : Window
             Title = "MSPaintEx";
             LogService.LogInfo(LOG_SOURCE, "Reset window title to: MSPaintEx");
             
+            // Update status bar with canvas size
+            if (_statusBar != null)
+            {
+                _statusBar.UpdateCanvasSize((int)_canvas.Width, (int)_canvas.Height);
+            }
+            
             LogService.LogInfo(LOG_SOURCE, "New document created successfully");
         }
         catch (Exception ex)
@@ -398,6 +420,12 @@ public partial class MainWindow : Window
                         _canvas.InvalidateVisual();
                         if (_canvasContainer != null) _canvasContainer.InvalidateVisual();
                         if (_scrollContent != null) _scrollContent.InvalidateVisual();
+                        
+                        // Update status bar with image dimensions
+                        if (_statusBar != null)
+                        {
+                            _statusBar.UpdateCanvasSize(imageWidth, imageHeight);
+                        }
                         
                         LogService.LogInfo(LOG_SOURCE, "Image loaded successfully");
                     }
@@ -786,6 +814,12 @@ public partial class MainWindow : Window
                     _scrollContent.Height = result.Height * zoomFactor;
                 }
 
+                // Update status bar with new canvas size
+                if (_statusBar != null)
+                {
+                    _statusBar.UpdateCanvasSize(result.Width, result.Height);
+                }
+
                 // Force a visual update
                 _canvas.InvalidateVisual();
                 if (_canvasContainer != null) _canvasContainer.InvalidateVisual();
@@ -963,6 +997,14 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             LogService.LogError(LOG_SOURCE, "Error testing selection", ex);
+        }
+    }
+
+    private void OnCanvasCoordinatesChanged(object? sender, (float X, float Y) coordinates)
+    {
+        if (_statusBar != null)
+        {
+            _statusBar.UpdateCoordinates(coordinates.X, coordinates.Y);
         }
     }
 }

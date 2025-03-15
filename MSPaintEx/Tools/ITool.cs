@@ -1,5 +1,6 @@
 using Avalonia.Input;
 using SkiaSharp;
+using MSPaintEx.Controls;
 
 namespace MSPaintEx.Tools
 {
@@ -19,5 +20,8 @@ namespace MSPaintEx.Tools
         
         // Get the cursor for this tool
         StandardCursorType GetCursor(SKPoint point);
+        
+        // Get the canvas associated with this tool
+        DrawingCanvas? GetCanvas();
     }
 } 

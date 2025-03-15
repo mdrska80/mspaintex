@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="30"
+             x:Class="MSPaintEx.Controls.StatusBar"
+             Height="30">
+    <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+            BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+            BorderThickness="0,1,0,0">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Coordinates display -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Coordinates: " VerticalAlignment="Center" FontWeight="SemiBold"/>
+                <TextBlock x:Name="CoordinatesText" Text="0, 0 px" VerticalAlignment="Center" Width="100" Margin="5,0,0,0"/>
+            </StackPanel>
+            
+            <!-- Canvas size display -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center">
+                <TextBlock Text="Canvas Size: " VerticalAlignment="Center" FontWeight="SemiBold"/>
+                <TextBlock x:Name="CanvasSizeText" Text="800 x 600 px" VerticalAlignment="Center" Width="120" Margin="5,0,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl> 

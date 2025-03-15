@@ -51,31 +51,42 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Panel>
-        <!-- Layer 2: Acrylic Effect -->
-        <ExperimentalAcrylicBorder IsHitTestVisible="False">
-            <ExperimentalAcrylicBorder.Material>
-                <ExperimentalAcrylicMaterial
-                    BackgroundSource="Digger"
-                    TintColor="{DynamicResource SystemAccentColor}"
-                    TintOpacity="0.5"
-                    MaterialOpacity="0.2"/>
-            </ExperimentalAcrylicBorder.Material>
-        </ExperimentalAcrylicBorder>
-
-        <!-- Layer 3: Contrast Gradient -->
+    <Grid>
+        <!-- Background layers -->
         <Panel>
-            <Panel.Background>
-                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Offset="0" Color="#15104080"/>
-                    <GradientStop Offset="1" Color="#25104080"/>
-                </LinearGradientBrush>
-            </Panel.Background>
+            <!-- Layer 2: Acrylic Effect -->
+            <ExperimentalAcrylicBorder IsHitTestVisible="False">
+                <ExperimentalAcrylicBorder.Material>
+                    <ExperimentalAcrylicMaterial
+                        BackgroundSource="Digger"
+                        TintColor="{DynamicResource SystemAccentColor}"
+                        TintOpacity="0.5"
+                        MaterialOpacity="0.2"/>
+                </ExperimentalAcrylicBorder.Material>
+            </ExperimentalAcrylicBorder>
+
+            <!-- Layer 3: Contrast Gradient -->
+            <Panel>
+                <Panel.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Offset="0" Color="#15104080"/>
+                        <GradientStop Offset="1" Color="#25104080"/>
+                    </LinearGradientBrush>
+                </Panel.Background>
+            </Panel>
         </Panel>
 
-        <DockPanel LastChildFill="True">
+        <!-- Main content -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Menu -->
+                <RowDefinition Height="Auto"/> <!-- Toolbar -->
+                <RowDefinition Height="*"/> <!-- Main content -->
+                <RowDefinition Height="Auto"/> <!-- Status bar -->
+            </Grid.RowDefinitions>
+            
             <!-- Main Menu -->
-            <Menu DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Menu Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <MenuItem Header="_File">
                     <MenuItem Header="_New" InputGesture="Ctrl+N" Click="OnNewClick"/>
                     <MenuItem Header="_Open..." InputGesture="Ctrl+O" Click="OnOpenClick"/>
@@ -140,7 +151,7 @@
             </Menu>
 
             <!-- Top toolbar -->
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Margin="5" Height="40">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Margin="5" Height="40">
                 <TextBlock Text="Stroke Width: " VerticalAlignment="Center" Margin="5,0" FontSize="14"/>
                 <NumericUpDown x:Name="StrokeWidth" 
                               Value="2"
@@ -177,151 +188,163 @@
                 </StackPanel>
             </StackPanel>
             
-            <!-- Tools toolbar -->
-            <StackPanel DockPanel.Dock="Left" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Width="60" Margin="0,0,5,0">
-                <TextBlock Text="Tools" HorizontalAlignment="Center" Margin="0,5,0,5" FontWeight="SemiBold"/>
+            <!-- Main content area with tools and canvas -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <!-- Tools -->
+                    <ColumnDefinition Width="Auto"/> <!-- Color palette -->
+                    <ColumnDefinition Width="*"/> <!-- Canvas -->
+                </Grid.ColumnDefinitions>
                 
-                <!-- Selection tools -->
-                <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
-                    <StackPanel>
-                        <RadioButton GroupName="Tools" Content="&#xE7A8;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Free-form Selection" Tag="FreeformSelect" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xEF20;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Rectangle Selection" Tag="RectangleSelect" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center" IsChecked="True"/>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Drawing tools -->
-                <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
-                    <StackPanel>
-                        <RadioButton GroupName="Tools" Content="&#xEDFB;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Pencil" Tag="Pencil" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xF0AD;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Brush" Tag="Brush" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Eraser" Tag="Eraser" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xF8B3;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Fill" Tag="Fill" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xE8D2;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Text" Tag="Text" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xF0FC;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Color Picker" Tag="ColorPicker" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Shape tools -->
-                <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
-                    <StackPanel>
-                        <RadioButton GroupName="Tools" Content="&#xE912;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Line" Tag="Line" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xEA3F;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Rectangle" Tag="Rectangle" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xF158;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Ellipse" Tag="Ellipse" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xF0E4;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Rounded Rectangle" Tag="RoundedRectangle" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                        <RadioButton GroupName="Tools" Content="&#xF0AD;" FontFamily="Segoe MDL2 Assets" 
-                                   ToolTip.Tip="Polygon" Tag="Polygon" 
-                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Tool options -->
-                <Border Background="#10000000" Padding="5" Margin="3,10,3,3" CornerRadius="3">
-                    <StackPanel>
-                        <TextBlock Text="Size:" Margin="0,0,0,5" HorizontalAlignment="Center"/>
-                        <NumericUpDown x:Name="ToolSizeSelector" 
-                                     Value="1"
-                                     Minimum="1"
-                                     Maximum="50"
-                                     ValueChanged="OnToolSizeChanged"
-                                     Width="50"
-                                     Height="30"
-                                     Padding="4,0"
-                                     HorizontalContentAlignment="Center"
-                                     VerticalContentAlignment="Center"
-                                     FormatString="0"
-                                     ClipValueToMinMax="True"
-                                     ShowButtonSpinner="True"
-                                     AllowSpin="True"
-                                     Increment="1"/>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Fill options -->
-                <Border Background="#10000000" Padding="5" Margin="3" CornerRadius="3">
-                    <StackPanel>
-                        <TextBlock Text="Fill:" Margin="0,0,0,5" HorizontalAlignment="Center"/>
-                        <ToggleButton x:Name="FillShapesToggle" 
-                                    Content="&#xE739;" 
-                                    FontFamily="Segoe MDL2 Assets"
-                                    ToolTip.Tip="Fill Shapes"
-                                    Click="OnFillShapesToggle"
-                                    HorizontalAlignment="Center"
-                                    Width="30"
-                                    Height="30"/>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
+                <!-- Tools toolbar -->
+                <StackPanel Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Width="60" Margin="0,0,5,0">
+                    <TextBlock Text="Tools" HorizontalAlignment="Center" Margin="0,5,0,5" FontWeight="SemiBold"/>
+                    
+                    <!-- Selection tools -->
+                    <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
+                        <StackPanel>
+                            <RadioButton GroupName="Tools" Content="&#xE7A8;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Free-form Selection" Tag="FreeformSelect" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xEF20;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Rectangle Selection" Tag="RectangleSelect" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center" IsChecked="True"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Drawing tools -->
+                    <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
+                        <StackPanel>
+                            <RadioButton GroupName="Tools" Content="&#xEDFB;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Pencil" Tag="Pencil" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xF0AD;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Brush" Tag="Brush" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Eraser" Tag="Eraser" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xF8B3;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Fill" Tag="Fill" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xE8D2;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Text" Tag="Text" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xF0FC;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Color Picker" Tag="ColorPicker" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Shape tools -->
+                    <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
+                        <StackPanel>
+                            <RadioButton GroupName="Tools" Content="&#xE912;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Line" Tag="Line" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xEA3F;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Rectangle" Tag="Rectangle" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xF158;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Ellipse" Tag="Ellipse" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xF0E4;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Rounded Rectangle" Tag="RoundedRectangle" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                            <RadioButton GroupName="Tools" Content="&#xF0AD;" FontFamily="Segoe MDL2 Assets" 
+                                       ToolTip.Tip="Polygon" Tag="Polygon" 
+                                       Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Tool options -->
+                    <Border Background="#10000000" Padding="5" Margin="3,10,3,3" CornerRadius="3">
+                        <StackPanel>
+                            <TextBlock Text="Size:" Margin="0,0,0,5" HorizontalAlignment="Center"/>
+                            <NumericUpDown x:Name="ToolSizeSelector" 
+                                         Value="1"
+                                         Minimum="1"
+                                         Maximum="50"
+                                         ValueChanged="OnToolSizeChanged"
+                                         Width="50"
+                                         Height="30"
+                                         Padding="4,0"
+                                         HorizontalContentAlignment="Center"
+                                         VerticalContentAlignment="Center"
+                                         FormatString="0"
+                                         ClipValueToMinMax="True"
+                                         ShowButtonSpinner="True"
+                                         AllowSpin="True"
+                                         Increment="1"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Fill options -->
+                    <Border Background="#10000000" Padding="5" Margin="3" CornerRadius="3">
+                        <StackPanel>
+                            <TextBlock Text="Fill:" Margin="0,0,0,5" HorizontalAlignment="Center"/>
+                            <ToggleButton x:Name="FillShapesToggle" 
+                                        Content="&#xE739;" 
+                                        FontFamily="Segoe MDL2 Assets"
+                                        ToolTip.Tip="Fill Shapes"
+                                        Click="OnFillShapesToggle"
+                                        HorizontalAlignment="Center"
+                                        Width="30"
+                                        Height="30"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
-            <!-- Left color palette -->
-            <controls:ColorPaletteSelector 
-                DockPanel.Dock="Left" 
-                x:Name="ColorSelector"
-                ColorSelected="OnColorSelected"
-                Margin="5"/>
+                <!-- Left color palette -->
+                <controls:ColorPaletteSelector 
+                    Grid.Column="1"
+                    x:Name="ColorSelector"
+                    ColorSelected="OnColorSelected"
+                    Margin="5"/>
 
-            <!-- Main content area -->
-            <Grid Grid.Row="2" Margin="40,20,40,20">
-                <!-- Canvas container with zoom and centering -->
-                <ScrollViewer Name="CanvasScrollViewer"
-                             HorizontalScrollBarVisibility="Auto" 
-                             VerticalScrollBarVisibility="Auto"
-                             Background="LightGray">
-                    <!-- Outer container that can grow -->
-                    <Grid Name="ScrollContent">
-                        <Grid Name="CanvasContainer" 
-                              Width="800"
-                              Height="600"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              RenderOptions.BitmapInterpolationMode="None">
-                            <!-- ScaleTransform for zoom -->
-                            <Grid.RenderTransform>
-                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                            </Grid.RenderTransform>
-                            
-                            <!-- White background for canvas area -->
-                            <Rectangle Fill="White"
-                                     Width="800"
-                                     Height="600"/>
-                            
-                            <!-- Actual drawing canvas -->
-                            <controls:DrawingCanvas Name="Canvas"
-                                                  Width="800"
-                                                  Height="600"
-                                                  Background="Transparent"
-                                                  StrokeThickness="2"
-                                                  RenderOptions.BitmapInterpolationMode="None"
-                                                  RenderOptions.EdgeMode="Aliased"
-                                                  Focusable="True"
-                                                  KeyboardNavigation.IsTabStop="True"/>
+                <!-- Canvas area -->
+                <Grid Grid.Column="2" Margin="40,20,40,20">
+                    <!-- Canvas container with zoom and centering -->
+                    <ScrollViewer Name="CanvasScrollViewer"
+                                 HorizontalScrollBarVisibility="Auto" 
+                                 VerticalScrollBarVisibility="Auto"
+                                 Background="LightGray">
+                        <!-- Outer container that can grow -->
+                        <Grid Name="ScrollContent">
+                            <Grid Name="CanvasContainer" 
+                                  Width="800"
+                                  Height="600"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  RenderOptions.BitmapInterpolationMode="None">
+                                <!-- ScaleTransform for zoom -->
+                                <Grid.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                </Grid.RenderTransform>
+                                
+                                <!-- White background for canvas area -->
+                                <Rectangle Fill="White"
+                                         Width="800"
+                                         Height="600"/>
+                                
+                                <!-- Actual drawing canvas -->
+                                <controls:DrawingCanvas Name="Canvas"
+                                                      Width="800"
+                                                      Height="600"
+                                                      Background="Transparent"
+                                                      StrokeThickness="2"
+                                                      RenderOptions.BitmapInterpolationMode="None"
+                                                      RenderOptions.EdgeMode="Aliased"
+                                                      Focusable="True"
+                                                      KeyboardNavigation.IsTabStop="True"/>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
-        </DockPanel>
-    </Panel>
+            
+            <!-- Status Bar -->
+            <controls:StatusBar Grid.Row="3" Name="StatusBar" Height="30" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+        </Grid>
+    </Grid>
 </Window>

@@ -1,18 +1,23 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Rendering.SceneGraph;
+using Avalonia.Skia;
+using Avalonia.Threading;
+using MSPaintEx.Tools;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.VisualTree;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;  // Add this for mouse handling
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Avalonia.Input.Platform;
-using System.IO;
-using MSPaintEx.Tools; // Use the Tools namespace
-using Avalonia.Threading; // Add this for Dispatcher
 
 namespace MSPaintEx.Controls
 {
@@ -52,6 +57,9 @@ namespace MSPaintEx.Controls
 
         // Event for color selection
         public event EventHandler<SKColor>? ColorSelected;
+        
+        // Event for coordinate updates
+        public event EventHandler<(float X, float Y)>? CoordinatesChanged;
 
         public DrawingCanvas()
         {
@@ -81,6 +89,12 @@ namespace MSPaintEx.Controls
             _toolManager = new ToolManager();
             _toolManager.ColorSelected += OnColorSelected;
             
+            // Set this canvas on the active tool
+            if (_toolManager.GetActiveTool() is ToolBase toolBase)
+            {
+                toolBase.SetCanvas(this);
+            }
+            
             this.PointerPressed += OnPointerPressed;
             this.PointerMoved += OnPointerMoved;
             this.PointerReleased += OnPointerReleased;
@@ -89,7 +103,7 @@ namespace MSPaintEx.Controls
         }
 
         // Helper method to get the current zoom factor from the parent window
-        private double GetCurrentZoomFactor()
+        public double GetCurrentZoomFactor()
         {
             // Find the parent window
             var window = this.GetVisualRoot() as MSPaintEx.Views.MainWindow;
@@ -141,8 +155,8 @@ namespace MSPaintEx.Controls
             double zoomFactor = GetCurrentZoomFactor();
             
             // Convert point to bitmap coordinates, accounting for zoom
-            var x = (float)(point.X * _bitmap.Width / (Bounds.Width * zoomFactor));
-            var y = (float)(point.Y * _bitmap.Height / (Bounds.Height * zoomFactor));
+            var x = (float)(point.X * _bitmap.Width / Bounds.Width);
+            var y = (float)(point.Y * _bitmap.Height / Bounds.Height);
             
             System.Diagnostics.Debug.WriteLine($"Pointer pressed at screen: {point.X}, {point.Y}, bitmap: {x}, {y}, zoom: {zoomFactor}");
             
@@ -175,8 +189,8 @@ namespace MSPaintEx.Controls
             double zoomFactor = GetCurrentZoomFactor();
             
             // Convert point to bitmap coordinates, accounting for zoom
-            var x = (float)(point.X * _bitmap.Width / (Bounds.Width * zoomFactor));
-            var y = (float)(point.Y * _bitmap.Height / (Bounds.Height * zoomFactor));
+            var x = (float)(point.X * _bitmap.Width / Bounds.Width);
+            var y = (float)(point.Y * _bitmap.Height / Bounds.Height);
             var currentPoint = new SKPoint(x, y);
             
             // Update cursor based on position
@@ -187,6 +201,9 @@ namespace MSPaintEx.Controls
             
             // Update the last point
             _lastPoint = currentPoint;
+            
+            // Raise the coordinates changed event
+            CoordinatesChanged?.Invoke(this, (x, y));
             
             InvalidateVisual();
         }
@@ -200,8 +217,8 @@ namespace MSPaintEx.Controls
             double zoomFactor = GetCurrentZoomFactor();
             
             // Convert point to bitmap coordinates, accounting for zoom
-            var x = (float)(point.X * _bitmap.Width / (Bounds.Width * zoomFactor));
-            var y = (float)(point.Y * _bitmap.Height / (Bounds.Height * zoomFactor));
+            var x = (float)(point.X * _bitmap.Width / Bounds.Width);
+            var y = (float)(point.Y * _bitmap.Height / Bounds.Height);
             
             System.Diagnostics.Debug.WriteLine($"Pointer released at screen: {point.X}, {point.Y}, bitmap: {x}, {y}, zoom: {zoomFactor}");
             
@@ -498,14 +515,63 @@ namespace MSPaintEx.Controls
                 bitmap,
                 new Rect(0, 0, renderBitmap.Width, renderBitmap.Height),
                 new Rect(0, 0, Bounds.Width, Bounds.Height));
+                
+            // If we have a selection, draw the selection border and handles directly on the Avalonia context
+            // This ensures they're drawn at a consistent size regardless of zoom
+            if (_toolManager.HasSelection && !_toolManager.IsMovingSelection)
+            {
+                double zoomFactor = GetCurrentZoomFactor();
+                
+                // Convert the selection rectangle to screen coordinates, accounting for zoom
+                var selectionRect = _toolManager.SelectionRect;
+                var screenRect = new Rect(
+                    selectionRect.Left * Bounds.Width / _bitmap.Width,
+                    selectionRect.Top * Bounds.Height / _bitmap.Height,
+                    selectionRect.Width * Bounds.Width / _bitmap.Width,
+                    selectionRect.Height * Bounds.Height / _bitmap.Height
+                );
+                
+                // Draw the selection border with a fixed pixel width
+                var pen = new Pen(Brushes.Black, 1.0 / zoomFactor);
+                context.DrawRectangle(pen, screenRect);
+                
+                // Draw a white dashed border inside the black border
+                var whitePen = new Pen(Brushes.White, 1.0 / zoomFactor)
+                {
+                    DashStyle = DashStyle.Dash
+                };
+                context.DrawRectangle(whitePen, screenRect);
+                
+                // Draw the selection handles with a fixed pixel size
+                var handleSize = 6.0 / zoomFactor;
+                var handleBrush = Brushes.White;
+                var handlePen = new Pen(Brushes.Black, 1.0 / zoomFactor);
+                
+                // Draw handles at corners and midpoints
+                DrawSelectionHandle(context, screenRect.TopLeft, handleSize, handleBrush, handlePen);
+                DrawSelectionHandle(context, screenRect.TopRight, handleSize, handleBrush, handlePen);
+                DrawSelectionHandle(context, screenRect.BottomLeft, handleSize, handleBrush, handlePen);
+                DrawSelectionHandle(context, screenRect.BottomRight, handleSize, handleBrush, handlePen);
+                
+                // Midpoints
+                DrawSelectionHandle(context, new Point(screenRect.Left + screenRect.Width / 2, screenRect.Top), handleSize, handleBrush, handlePen);
+                DrawSelectionHandle(context, new Point(screenRect.Left, screenRect.Top + screenRect.Height / 2), handleSize, handleBrush, handlePen);
+                DrawSelectionHandle(context, new Point(screenRect.Right, screenRect.Top + screenRect.Height / 2), handleSize, handleBrush, handlePen);
+                DrawSelectionHandle(context, new Point(screenRect.Left + screenRect.Width / 2, screenRect.Bottom), handleSize, handleBrush, handlePen);
+            }
         }
         
-        private void DrawSelectionHandle(SKCanvas canvas, float x, float y, float size, SKPaint fillPaint, SKPaint borderPaint)
+        // Helper method to draw a selection handle
+        private void DrawSelectionHandle(DrawingContext context, Point center, double size, IBrush fillBrush, Pen borderPen)
         {
-            float halfSize = size / 2;
-            SKRect handleRect = new SKRect(x - halfSize, y - halfSize, x + halfSize, y + halfSize);
-            canvas.DrawRect(handleRect, fillPaint);
-            canvas.DrawRect(handleRect, borderPaint);
+            var rect = new Rect(
+                center.X - size / 2,
+                center.Y - size / 2,
+                size,
+                size
+            );
+            
+            context.DrawRectangle(fillBrush, borderPen, rect);
         }
 
         // Method to clear the canvas
@@ -819,6 +885,13 @@ namespace MSPaintEx.Controls
         public void SetTool(DrawingTool tool)
         {
             _toolManager.SetTool(tool);
+            
+            // Set this canvas on the active tool
+            if (_toolManager.GetActiveTool() is ToolBase toolBase)
+            {
+                toolBase.SetCanvas(this);
+            }
+            
             InvalidateVisual();
         }
 

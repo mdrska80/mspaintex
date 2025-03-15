@@ -209,7 +209,12 @@ namespace MSPaintEx.Tools
         {
             if (!_hasSelection) return ResizeHandle.None;
             
-            float halfSize = HANDLE_SIZE / 2;
+            // Get the current zoom factor to adjust handle hit testing
+            double zoomFactor = GetZoomFactor();
+            
+            // Adjust handle size based on zoom factor
+            float handleSize = HANDLE_SIZE / (float)zoomFactor;
+            float halfSize = handleSize / 2;
             
             // Check corners first (they take precedence)
             if (Math.Abs(x - _selectionRect.Left) <= halfSize && Math.Abs(y - _selectionRect.Top) <= halfSize)
@@ -344,6 +349,31 @@ namespace MSPaintEx.Tools
         public void RaiseColorSelected(SKColor color)
         {
             ColorSelected?.Invoke(this, color);
+        }
+        
+        // Method to get the current drawing color
+        public SKColor GetColor()
+        {
+            return _paint.Color;
+        }
+        
+        // Get the active tool
+        public ITool GetActiveTool()
+        {
+            return _activeTool;
+        }
+        
+        // Method to get the current zoom factor
+        public double GetZoomFactor()
+        {
+            // Try to find the canvas from the active tool
+            var canvas = _activeTool?.GetCanvas();
+            if (canvas != null)
+            {
+                return canvas.GetCurrentZoomFactor();
+            }
+            
+            return 1.0; // Default to 1.0 if we can't get the zoom factor
         }
     }
 } 
