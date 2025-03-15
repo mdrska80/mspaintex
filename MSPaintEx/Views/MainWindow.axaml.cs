@@ -96,6 +96,31 @@ public partial class MainWindow : Window
                     OnResizeCanvasClick(this, new RoutedEventArgs());
                     e.Handled = true;
                 }
+                else if (e.Key == Key.A && (e.KeyModifiers == KeyModifiers.Control || e.KeyModifiers == KeyModifiers.Meta))
+                {
+                    OnSelectAllClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Escape)
+                {
+                    OnClearSelectionClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.X && (e.KeyModifiers == KeyModifiers.Control || e.KeyModifiers == KeyModifiers.Meta))
+                {
+                    OnCutClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.C && (e.KeyModifiers == KeyModifiers.Control || e.KeyModifiers == KeyModifiers.Meta))
+                {
+                    OnCopyClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.V && (e.KeyModifiers == KeyModifiers.Control || e.KeyModifiers == KeyModifiers.Meta))
+                {
+                    OnPasteClick(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
             };
 
             LogService.LogInfo(LOG_SOURCE, "MainWindow initialized successfully");
@@ -512,27 +537,97 @@ public partial class MainWindow : Window
 
     private void OnCutClick(object? sender, RoutedEventArgs e)
     {
-        // TODO: Implement cut
+        try
+        {
+            if (_canvas == null)
+            {
+                LogService.LogWarning(LOG_SOURCE, "Canvas is null during cut operation");
+                return;
+            }
+            
+            LogService.LogInfo(LOG_SOURCE, "Cutting selection to clipboard");
+            _canvas.Cut();
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error during cut operation", ex);
+        }
     }
 
     private void OnCopyClick(object? sender, RoutedEventArgs e)
     {
-        // TODO: Implement copy
+        try
+        {
+            if (_canvas == null)
+            {
+                LogService.LogWarning(LOG_SOURCE, "Canvas is null during copy operation");
+                return;
+            }
+            
+            LogService.LogInfo(LOG_SOURCE, "Copying selection to clipboard");
+            _canvas.Copy();
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error during copy operation", ex);
+        }
     }
 
-    private void OnPasteClick(object? sender, RoutedEventArgs e)
+    private async void OnPasteClick(object? sender, RoutedEventArgs e)
     {
-        // TODO: Implement paste
+        try
+        {
+            if (_canvas == null)
+            {
+                LogService.LogWarning(LOG_SOURCE, "Canvas is null during paste operation");
+                return;
+            }
+            
+            LogService.LogInfo(LOG_SOURCE, "Pasting from clipboard");
+            await _canvas.PasteAsync();
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error during paste operation", ex);
+        }
     }
 
     private void OnSelectAllClick(object? sender, RoutedEventArgs e)
     {
-        // TODO: Implement select all
+        try
+        {
+            if (_canvas == null)
+            {
+                LogService.LogWarning(LOG_SOURCE, "Canvas is null during select all operation");
+                return;
+            }
+            
+            LogService.LogInfo(LOG_SOURCE, "Selecting all content");
+            _canvas.SelectAll();
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error during select all operation", ex);
+        }
     }
 
     private void OnClearSelectionClick(object? sender, RoutedEventArgs e)
     {
-        // TODO: Implement clear selection
+        try
+        {
+            if (_canvas == null)
+            {
+                LogService.LogWarning(LOG_SOURCE, "Canvas is null during clear selection operation");
+                return;
+            }
+            
+            LogService.LogInfo(LOG_SOURCE, "Clearing selection");
+            _canvas.ClearSelection();
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error during clear selection operation", ex);
+        }
     }
 
     private void OnZoomClick(object? sender, RoutedEventArgs e)
