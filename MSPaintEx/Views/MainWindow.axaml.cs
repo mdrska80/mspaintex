@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using MSPaintEx.Services;
 using System.Linq;
+using SkiaSharp;
+using System.IO;
 
 namespace MSPaintEx.Views;
 
@@ -27,6 +29,9 @@ public partial class MainWindow : Window
     private decimal _currentZoom = 100m;
     private const decimal MIN_ZOOM = 10m;
     private const decimal MAX_ZOOM = 3200m;
+    
+    // Track the current file for Save operations
+    private IStorageFile? _currentFile;
 
     public MainWindow()
     {
@@ -213,7 +218,7 @@ public partial class MainWindow : Window
 
     #region Menu Event Handlers
 
-    private void OnNewClick(object? sender, RoutedEventArgs e)
+    private async void OnNewClick(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -223,8 +228,19 @@ public partial class MainWindow : Window
                 LogService.LogWarning(LOG_SOURCE, "Canvas is null during new document creation");
                 return;
             }
-            // TODO: Add confirmation dialog if there are unsaved changes
+            
+            // For now, just create a new document without confirmation
+            // In a real application, you would add a confirmation dialog here
+            
             _canvas.Clear();
+            
+            // Reset current file
+            _currentFile = null;
+            
+            // Reset window title
+            Title = "MSPaintEx";
+            LogService.LogInfo(LOG_SOURCE, "Reset window title to: MSPaintEx");
+            
             LogService.LogInfo(LOG_SOURCE, "New document created successfully");
         }
         catch (Exception ex)
@@ -246,7 +262,7 @@ public partial class MainWindow : Window
                 { 
                     new FilePickerFileType("Image Files")
                     {
-                        Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp" }
+                        Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif" }
                     }
                 }
             });
@@ -254,7 +270,77 @@ public partial class MainWindow : Window
             if (files.Count > 0)
             {
                 LogService.LogInfo(LOG_SOURCE, $"Selected file: {files[0].Name}");
-                // TODO: Implement file opening
+                
+                // Update window title with file path
+                string filePath = files[0].Path.LocalPath;
+                Title = $"MSPaintEx - {filePath}";
+                LogService.LogInfo(LOG_SOURCE, $"Updated window title to: {Title}");
+                
+                // Load the image using SkiaSharp
+                using var stream = await files[0].OpenReadAsync();
+                using var memoryStream = new System.IO.MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+                
+                // Decode the image using SkiaSharp
+                var skBitmap = SKBitmap.Decode(memoryStream);
+                
+                if (skBitmap != null)
+                {
+                    // Get image dimensions
+                    int imageWidth = skBitmap.Width;
+                    int imageHeight = skBitmap.Height;
+                    
+                    LogService.LogInfo(LOG_SOURCE, $"Image dimensions: {imageWidth}x{imageHeight}");
+                    
+                    // Resize canvas to match image dimensions
+                    if (_canvas != null)
+                    {
+                        // Resize the canvas bitmap
+                        _canvas.Resize(imageWidth, imageHeight);
+                        
+                        // Update canvas dimensions
+                        _canvas.Width = imageWidth;
+                        _canvas.Height = imageHeight;
+                        
+                        // Draw the loaded image onto the canvas
+                        _canvas.DrawBitmap(skBitmap);
+                        
+                        // Update container dimensions
+                        if (_canvasContainer != null)
+                        {
+                            _canvasContainer.Width = imageWidth;
+                            _canvasContainer.Height = imageHeight;
+                            
+                            // Update background rectangle size
+                            var backgroundRect = _canvasContainer.Children.OfType<Rectangle>().FirstOrDefault();
+                            if (backgroundRect != null)
+                            {
+                                backgroundRect.Width = imageWidth;
+                                backgroundRect.Height = imageHeight;
+                            }
+                        }
+                        
+                        // Update scroll content size based on current zoom
+                        if (_scrollContent != null)
+                        {
+                            double zoomFactor = (double)_currentZoom / 100.0;
+                            _scrollContent.Width = imageWidth * zoomFactor;
+                            _scrollContent.Height = imageHeight * zoomFactor;
+                        }
+                        
+                        // Force a visual update
+                        _canvas.InvalidateVisual();
+                        if (_canvasContainer != null) _canvasContainer.InvalidateVisual();
+                        if (_scrollContent != null) _scrollContent.InvalidateVisual();
+                        
+                        LogService.LogInfo(LOG_SOURCE, "Image loaded successfully");
+                    }
+                }
+                else
+                {
+                    LogService.LogError(LOG_SOURCE, "Failed to decode image");
+                }
             }
             else
             {
@@ -271,11 +357,23 @@ public partial class MainWindow : Window
     {
         try
         {
-            await SaveAsAsync();
+            LogService.LogInfo(LOG_SOURCE, "Save requested");
+            
+            if (_currentFile != null)
+            {
+                // We have a current file, save to it
+                await SaveCanvasToFile(_currentFile);
+                LogService.LogInfo(LOG_SOURCE, $"Saved to existing file: {_currentFile.Name}");
+            }
+            else
+            {
+                // No current file, use Save As
+                await SaveAsAsync();
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error saving file: {ex}");
+            LogService.LogError(LOG_SOURCE, "Error saving file", ex);
         }
     }
 
@@ -311,19 +409,95 @@ public partial class MainWindow : Window
 
             if (file != null)
             {
-                // TODO: Implement save as functionality
+                await SaveCanvasToFile(file);
+                
+                // Store the current file for future "Save" operations
+                _currentFile = file;
+                
+                // Update window title with file path
+                string filePath = file.Path.LocalPath;
+                Title = $"MSPaintEx - {filePath}";
+                LogService.LogInfo(LOG_SOURCE, $"Updated window title to: {Title}");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error in SaveAsAsync: {ex}");
+            LogService.LogError(LOG_SOURCE, $"Error in SaveAsAsync: {ex}");
             throw; // Rethrow to be caught by the caller
         }
     }
-
-    private void OnExitClick(object? sender, RoutedEventArgs e)
+    
+    private async Task SaveCanvasToFile(IStorageFile file)
     {
-        Close();
+        if (_canvas == null || file == null) return;
+        
+        LogService.LogInfo(LOG_SOURCE, $"Saving image to {file.Name}");
+        
+        try
+        {
+            // Create a memory stream to save the bitmap
+            using var memoryStream = new MemoryStream();
+            
+            // Determine the format based on file extension
+            string extension = System.IO.Path.GetExtension(file.Name).ToLowerInvariant();
+            SKEncodedImageFormat format = SKEncodedImageFormat.Png; // Default
+            
+            switch (extension)
+            {
+                case ".jpg":
+                case ".jpeg":
+                    format = SKEncodedImageFormat.Jpeg;
+                    break;
+                case ".bmp":
+                    format = SKEncodedImageFormat.Bmp;
+                    break;
+                case ".png":
+                default:
+                    format = SKEncodedImageFormat.Png;
+                    break;
+            }
+            
+            // Get the SKBitmap from the canvas and encode it
+            var skBitmap = _canvas.GetBitmap();
+            if (skBitmap != null)
+            {
+                skBitmap.Encode(memoryStream, format, 100);
+                memoryStream.Position = 0;
+                
+                // Write the memory stream to the file
+                using var fileStream = await file.OpenWriteAsync();
+                await memoryStream.CopyToAsync(fileStream);
+                
+                LogService.LogInfo(LOG_SOURCE, $"Image saved successfully to {file.Name}");
+            }
+            else
+            {
+                LogService.LogError(LOG_SOURCE, "Failed to get bitmap from canvas");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, $"Error saving file: {ex}");
+            throw;
+        }
+    }
+
+    private async void OnExitClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LogService.LogInfo(LOG_SOURCE, "Exit requested");
+            
+            // For now, just exit without confirmation
+            // In a real application, you would add a confirmation dialog here
+            // if there are unsaved changes
+            
+            Close();
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error during exit", ex);
+        }
     }
 
     private void OnUndoClick(object? sender, RoutedEventArgs e)
@@ -436,7 +610,12 @@ public partial class MainWindow : Window
                 return;
             }
 
-            var resizeWindow = new ResizeCanvasWindow((int)_canvas.Width, (int)_canvas.Height);
+            // Ensure we have valid dimensions
+            int canvasWidth = Math.Max(1, (int)_canvas.Width);
+            int canvasHeight = Math.Max(1, (int)_canvas.Height);
+            
+            LogService.LogInfo(LOG_SOURCE, $"Opening resize dialog with current size: {canvasWidth}x{canvasHeight}");
+            var resizeWindow = new ResizeCanvasWindow(canvasWidth, canvasHeight);
             var result = await resizeWindow.ShowDialog<ResizeResult>(this);
 
             if (result?.Confirmed == true)

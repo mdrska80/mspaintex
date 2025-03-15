@@ -5,7 +5,7 @@
         x:DataType="local:ResizeCanvasWindow"
         Title="Resize Canvas"
         Width="400"
-        Height="345"
+        Height="540"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         ExtendClientAreaToDecorationsHint="True"
@@ -67,39 +67,89 @@
             <Grid Grid.Row="1" Margin="40,20,40,20">
                 <StackPanel Spacing="12">
                     <!-- Description -->
-                    <TextBlock Text="Enter new dimensions for the canvas"
+                    <TextBlock Text="Enter new dimensions for the canvas. The image will not be stretched - it will be cropped if the new size is smaller, or extended with white space if larger."
                              Foreground="#000000"
                              FontSize="16"
-                             TextWrapping="Wrap"/>
+                             TextWrapping="Wrap"
+                             Margin="0,0,0,8"/>
+                             
+                    <!-- Current Size Display -->
+                    <Border Background="#10000000" CornerRadius="4" Padding="10" Margin="0,0,0,12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Current Size" 
+                                     FontWeight="SemiBold"
+                                     Foreground="#000000"
+                                     FontSize="14"/>
+                            <TextBlock Text="{Binding CurrentSizeText}" 
+                                     Foreground="#000000"
+                                     FontSize="14"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Resize Options -->
+                    <ComboBox SelectedIndex="{Binding ResizeMode}" 
+                            Width="200" 
+                            HorizontalAlignment="Left"
+                            Margin="0,0,0,12">
+                        <ComboBoxItem Content="Pixels"/>
+                        <ComboBoxItem Content="Percentage"/>
+                    </ComboBox>
 
-                    <!-- Width input -->
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Width (pixels)"
+                    <!-- Width and Height inputs side by side -->
+                    <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsPixelMode}">
+                        <!-- Width input -->
+                        <StackPanel Grid.Column="0" Spacing="8">
+                            <TextBlock Text="Width (pixels)"
+                                     Foreground="#000000"
+                                     FontSize="14"/>
+                            <NumericUpDown Value="{Binding CanvasWidth}"
+                                         Minimum="1"
+                                         Maximum="4096"
+                                         FormatString="0"
+                                         Name="WidthInput"/>
+                        </StackPanel>
+
+                        <!-- Height input -->
+                        <StackPanel Grid.Column="2" Spacing="8">
+                            <TextBlock Text="Height (pixels)"
+                                     Foreground="#000000"
+                                     FontSize="14"/>
+                            <NumericUpDown Value="{Binding CanvasHeight}"
+                                         Minimum="1"
+                                         Maximum="4096"
+                                         FormatString="0"
+                                         Name="HeightInput"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- Percentage input -->
+                    <StackPanel Spacing="8" IsVisible="{Binding IsPercentageMode}">
+                        <TextBlock Text="Scale (%)"
                                  Foreground="#000000"
                                  FontSize="14"/>
-                        <NumericUpDown Value="{Binding CanvasWidth}"
+                        <NumericUpDown Value="{Binding ScalePercentage}"
                                      Minimum="1"
-                                     Maximum="4096"
+                                     Maximum="1000"
                                      FormatString="0"
-                                     Name="WidthInput"/>
-                    </StackPanel>
-
-                    <!-- Height input -->
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Height (pixels)"
+                                     Name="PercentageInput"/>
+                        <TextBlock Text="{Binding NewSizeFromPercentageText}" 
                                  Foreground="#000000"
-                                 FontSize="14"/>
-                        <NumericUpDown Value="{Binding CanvasHeight}"
-                                     Minimum="1"
-                                     Maximum="4096"
-                                     FormatString="0"
-                                     Name="HeightInput"/>
+                                 FontSize="12"
+                                 Margin="0,4,0,0"/>
                     </StackPanel>
-
-                    <!-- Maintain aspect ratio -->
-                    <CheckBox Content="Maintain aspect ratio"
-                            IsChecked="{Binding MaintainAspectRatio}"
-                            Foreground="#000000"/>
+                    
+                    <!-- Preview of new size -->
+                    <Border Background="#10000000" CornerRadius="4" Padding="10" Margin="0,12,0,12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="New Size" 
+                                     FontWeight="SemiBold"
+                                     Foreground="#000000"
+                                     FontSize="14"/>
+                            <TextBlock Text="{Binding NewSizeText}" 
+                                     Foreground="#000000"
+                                     FontSize="14"/>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Buttons -->
                     <StackPanel Orientation="Horizontal" 
@@ -117,7 +167,8 @@
                                 Classes="modern accent"
                                 Click="OnResizeClick"
                                 IsDefault="True"
-                                Width="100"/>
+                                Width="100"
+                                CornerRadius="8"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>

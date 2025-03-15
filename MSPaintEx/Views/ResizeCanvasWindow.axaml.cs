@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Avalonia.Data;
 
 namespace MSPaintEx.Views
 {
@@ -12,8 +13,10 @@ namespace MSPaintEx.Views
     {
         private int _canvasWidth;
         private int _canvasHeight;
-        private bool _maintainAspectRatio;
-        private readonly double _aspectRatio;
+        private int _originalWidth;
+        private int _originalHeight;
+        private int _resizeMode = 0; // 0 = Pixels, 1 = Percentage
+        private int _scalePercentage = 100;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -31,11 +34,7 @@ namespace MSPaintEx.Views
                 {
                     _canvasWidth = value;
                     NotifyPropertyChanged();
-                    if (MaintainAspectRatio)
-                    {
-                        _canvasHeight = (int)(value / _aspectRatio);
-                        NotifyPropertyChanged(nameof(CanvasHeight));
-                    }
+                    NotifyPropertyChanged(nameof(NewSizeText));
                 }
             }
         }
@@ -49,26 +48,81 @@ namespace MSPaintEx.Views
                 {
                     _canvasHeight = value;
                     NotifyPropertyChanged();
-                    if (MaintainAspectRatio)
+                    NotifyPropertyChanged(nameof(NewSizeText));
+                }
+            }
+        }
+        
+        public int ResizeMode
+        {
+            get => _resizeMode;
+            set
+            {
+                if (_resizeMode != value)
+                {
+                    _resizeMode = value;
+                    NotifyPropertyChanged();
+                    NotifyPropertyChanged(nameof(IsPixelMode));
+                    NotifyPropertyChanged(nameof(IsPercentageMode));
+                    
+                    // Update sizes based on the new mode
+                    if (value == 1) // Percentage mode
                     {
-                        _canvasWidth = (int)(value * _aspectRatio);
-                        NotifyPropertyChanged(nameof(CanvasWidth));
+                        // Reset to 100% when switching to percentage mode
+                        ScalePercentage = 100;
+                    }
+                    else // Pixel mode
+                    {
+                        // When switching back to pixel mode, use the calculated values from percentage
+                        if (_scalePercentage != 100)
+                        {
+                            CanvasWidth = CalculateWidthFromPercentage();
+                            CanvasHeight = CalculateHeightFromPercentage();
+                        }
                     }
                 }
             }
         }
-
-        public bool MaintainAspectRatio
+        
+        public int ScalePercentage
         {
-            get => _maintainAspectRatio;
+            get => _scalePercentage;
             set
             {
-                if (_maintainAspectRatio != value)
+                if (_scalePercentage != value)
                 {
-                    _maintainAspectRatio = value;
+                    _scalePercentage = value;
                     NotifyPropertyChanged();
+                    NotifyPropertyChanged(nameof(NewSizeFromPercentageText));
                 }
             }
+        }
+        
+        public bool IsPixelMode => _resizeMode == 0;
+        public bool IsPercentageMode => _resizeMode == 1;
+        
+        public string CurrentSizeText => $"{_originalWidth} × {_originalHeight} pixels";
+        
+        public string NewSizeText => $"{CanvasWidth} × {CanvasHeight} pixels";
+        
+        public string NewSizeFromPercentageText
+        {
+            get
+            {
+                int width = CalculateWidthFromPercentage();
+                int height = CalculateHeightFromPercentage();
+                return $"New size will be: {width} × {height} pixels";
+            }
+        }
+        
+        private int CalculateWidthFromPercentage()
+        {
+            return Math.Max(1, (int)Math.Round(_originalWidth * _scalePercentage / 100.0));
+        }
+        
+        private int CalculateHeightFromPercentage()
+        {
+            return Math.Max(1, (int)Math.Round(_originalHeight * _scalePercentage / 100.0));
         }
 
         public ResizeCanvasWindow()
@@ -94,9 +148,11 @@ namespace MSPaintEx.Views
 
         public ResizeCanvasWindow(int currentWidth, int currentHeight) : this()
         {
+            _originalWidth = currentWidth;
+            _originalHeight = currentHeight;
             CanvasWidth = currentWidth;
             CanvasHeight = currentHeight;
-            _aspectRatio = (double)currentWidth / currentHeight;
+            NotifyPropertyChanged(nameof(CurrentSizeText));
         }
 
         private void OnTitleBarPointerPressed(object sender, PointerPressedEventArgs e)
@@ -116,8 +172,21 @@ namespace MSPaintEx.Views
 
         private void OnResizeClick(object sender, RoutedEventArgs e)
         {
+            int finalWidth, finalHeight;
+            
+            if (IsPercentageMode)
+            {
+                finalWidth = CalculateWidthFromPercentage();
+                finalHeight = CalculateHeightFromPercentage();
+            }
+            else
+            {
+                finalWidth = CanvasWidth;
+                finalHeight = CanvasHeight;
+            }
+            
             // Validate dimensions
-            if (CanvasWidth < 1 || CanvasWidth > 4096 || CanvasHeight < 1 || CanvasHeight > 4096)
+            if (finalWidth < 1 || finalWidth > 4096 || finalHeight < 1 || finalHeight > 4096)
             {
                 // TODO: Show error message
                 return;
@@ -125,8 +194,8 @@ namespace MSPaintEx.Views
 
             var result = new ResizeResult
             {
-                Width = CanvasWidth,
-                Height = CanvasHeight,
+                Width = finalWidth,
+                Height = finalHeight,
                 Confirmed = true
             };
             Close(result);
