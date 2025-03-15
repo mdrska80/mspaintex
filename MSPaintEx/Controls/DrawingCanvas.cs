@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Input.Platform;
 using System.IO;
+using MSPaintEx.Tools; // Use the Tools namespace
+using Avalonia.Threading; // Add this for Dispatcher
 
 namespace MSPaintEx.Controls
 {
@@ -34,58 +36,35 @@ namespace MSPaintEx.Controls
         private SKPaint _paint;
         private SKPoint? _lastPoint;  // Track last point for drawing
         private bool _isDrawing;      // Track if we're currently drawing
-
-        // Selection properties
-        private bool _hasSelection;
-        private SKRect _selectionRect;
-        private SKBitmap? _selectionBitmap;
-        private SKPaint _selectionPaint;
-        private bool _isMovingSelection;
-        private bool _isResizingSelection;
-        private SKPoint _selectionMoveStart;
-        private SKPoint _selectionOffset;
-        private ResizeHandle _activeResizeHandle = ResizeHandle.None;
-        private SKRect _originalSelectionRect;
-
-        // Resize handle size
-        private const float HANDLE_SIZE = 8;
         
-        // Enum to track which resize handle is active
-        private enum ResizeHandle
-        {
-            None,
-            TopLeft,
-            TopCenter,
-            TopRight,
-            MiddleLeft,
-            MiddleRight,
-            BottomLeft,
-            BottomCenter,
-            BottomRight
-        }
+        // Selection properties
+        private SKPaint _selectionPaint;
+        
+        // Temporary bitmap for preview
+        private SKBitmap? _tempBitmap;
 
         // The canvas size properties
         private const int DEFAULT_WIDTH = 800;
         private const int DEFAULT_HEIGHT = 600;
+
+        // Tool manager
+        private ToolManager _toolManager;
+
+        // Event for color selection
+        public event EventHandler<SKColor>? ColorSelected;
 
         public DrawingCanvas()
         {
             InitializeBitmap(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             Background = Brushes.White;
             
-            this.PointerPressed += OnPointerPressed;
-            this.PointerMoved += OnPointerMoved;
-            this.PointerReleased += OnPointerReleased;
-
+            // Initialize paint
             _paint = new SKPaint
             {
                 Style = SKPaintStyle.Stroke,
                 Color = SKColors.Black,
-                StrokeWidth = (float)StrokeThickness,
-                StrokeJoin = SKStrokeJoin.Round,
-                StrokeCap = SKStrokeCap.Round,
-                // Disable antialiasing for pixel-perfect drawing
-                IsAntialias = false
+                StrokeWidth = 1,
+                IsAntialias = true
             };
             
             // Initialize selection paint
@@ -94,8 +73,48 @@ namespace MSPaintEx.Controls
                 Style = SKPaintStyle.Stroke,
                 Color = SKColors.Black,
                 StrokeWidth = 1,
-                PathEffect = SKPathEffect.CreateDash(new float[] { 5, 5 }, 0)
+                PathEffect = SKPathEffect.CreateDash(new float[] { 5, 5 }, 0),
+                IsAntialias = true
             };
+            
+            // Initialize tool manager
+            _toolManager = new ToolManager();
+            _toolManager.ColorSelected += OnColorSelected;
+            
+            this.PointerPressed += OnPointerPressed;
+            this.PointerMoved += OnPointerMoved;
+            this.PointerReleased += OnPointerReleased;
+            this.KeyDown += OnKeyDown;
+            this.Focusable = true;
+        }
+
+        // Helper method to get the current zoom factor from the parent window
+        private double GetCurrentZoomFactor()
+        {
+            // Find the parent window
+            var window = this.GetVisualRoot() as MSPaintEx.Views.MainWindow;
+            if (window != null)
+            {
+                // Get the zoom level from the window
+                var zoomText = window.FindControl<TextBlock>("ZoomLevel")?.Text;
+                if (zoomText != null && zoomText.EndsWith("%"))
+                {
+                    if (decimal.TryParse(zoomText.TrimEnd('%'), out decimal zoomLevel))
+                    {
+                        return (double)(zoomLevel / 100m);
+                    }
+                }
+            }
+            
+            // Default to 1.0 (100%) if we can't determine the zoom level
+            return 1.0;
+        }
+
+        // Handle color selection event from tool manager
+        private void OnColorSelected(object? sender, SKColor color)
+        {
+            // Forward the event to subscribers
+            ColorSelected?.Invoke(this, color);
         }
 
         // Override property changed to handle bounds changes
@@ -113,273 +132,316 @@ namespace MSPaintEx.Controls
             }
         }
 
-        // Check if a point is near a resize handle
-        private ResizeHandle GetResizeHandleAtPoint(float x, float y)
-        {
-            if (!_hasSelection) return ResizeHandle.None;
-            
-            float halfSize = HANDLE_SIZE / 2;
-            
-            // Check corners first (they take precedence)
-            if (Math.Abs(x - _selectionRect.Left) <= halfSize && Math.Abs(y - _selectionRect.Top) <= halfSize)
-                return ResizeHandle.TopLeft;
-                
-            if (Math.Abs(x - _selectionRect.Right) <= halfSize && Math.Abs(y - _selectionRect.Top) <= halfSize)
-                return ResizeHandle.TopRight;
-                
-            if (Math.Abs(x - _selectionRect.Left) <= halfSize && Math.Abs(y - _selectionRect.Bottom) <= halfSize)
-                return ResizeHandle.BottomLeft;
-                
-            if (Math.Abs(x - _selectionRect.Right) <= halfSize && Math.Abs(y - _selectionRect.Bottom) <= halfSize)
-                return ResizeHandle.BottomRight;
-            
-            // Then check edges
-            if (Math.Abs(x - (_selectionRect.Left + _selectionRect.Width / 2)) <= halfSize && Math.Abs(y - _selectionRect.Top) <= halfSize)
-                return ResizeHandle.TopCenter;
-                
-            if (Math.Abs(x - (_selectionRect.Left + _selectionRect.Width / 2)) <= halfSize && Math.Abs(y - _selectionRect.Bottom) <= halfSize)
-                return ResizeHandle.BottomCenter;
-                
-            if (Math.Abs(x - _selectionRect.Left) <= halfSize && Math.Abs(y - (_selectionRect.Top + _selectionRect.Height / 2)) <= halfSize)
-                return ResizeHandle.MiddleLeft;
-                
-            if (Math.Abs(x - _selectionRect.Right) <= halfSize && Math.Abs(y - (_selectionRect.Top + _selectionRect.Height / 2)) <= halfSize)
-                return ResizeHandle.MiddleRight;
-            
-            return ResizeHandle.None;
-        }
-
         // Handle pointer (mouse) pressed event
         private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (_bitmap == null) return;
 
             var point = e.GetPosition(this);
+            double zoomFactor = GetCurrentZoomFactor();
             
-            // Convert point to bitmap coordinates
-            var x = (float)(point.X * _bitmap.Width / Bounds.Width);
-            var y = (float)(point.Y * _bitmap.Height / Bounds.Height);
+            // Convert point to bitmap coordinates, accounting for zoom
+            var x = (float)(point.X * _bitmap.Width / (Bounds.Width * zoomFactor));
+            var y = (float)(point.Y * _bitmap.Height / (Bounds.Height * zoomFactor));
             
-            // Check if we're clicking on a resize handle
-            var handle = GetResizeHandleAtPoint(x, y);
-            if (handle != ResizeHandle.None)
+            System.Diagnostics.Debug.WriteLine($"Pointer pressed at screen: {point.X}, {point.Y}, bitmap: {x}, {y}, zoom: {zoomFactor}");
+            
+            // Create a temporary bitmap for preview if needed
+            if (_toolManager.CurrentTool == DrawingTool.Line ||
+                _toolManager.CurrentTool == DrawingTool.Rectangle ||
+                _toolManager.CurrentTool == DrawingTool.Ellipse ||
+                _toolManager.CurrentTool == DrawingTool.RoundedRectangle ||
+                _toolManager.CurrentTool == DrawingTool.Polygon)
             {
-                _activeResizeHandle = handle;
-                _isResizingSelection = true;
-                _originalSelectionRect = _selectionRect;
-                _selectionMoveStart = new SKPoint(x, y);
-                return;
+                _tempBitmap = _bitmap.Copy();
             }
             
-            // Check if we're clicking inside the selection
-            if (_hasSelection && _selectionRect.Contains(x, y))
-            {
-                _isMovingSelection = true;
-                _selectionMoveStart = new SKPoint(x, y);
-                return;
-            }
+            // Pass the event to the tool manager
+            _toolManager.OnPointerPressed(new SKPoint(x, y), _bitmap);
             
-            // If we have a selection and clicked outside, commit the selection
-            if (_hasSelection)
-            {
-                CommitSelection();
-            }
-            
+            // Update the last point
             _lastPoint = new SKPoint(x, y);
             _isDrawing = true;
+            
+            InvalidateVisual();
         }
-
+        
         // Handle pointer (mouse) moved event
         private void OnPointerMoved(object? sender, PointerEventArgs e)
         {
             if (_bitmap == null) return;
             
             var point = e.GetPosition(this);
+            double zoomFactor = GetCurrentZoomFactor();
             
-            // Convert point to bitmap coordinates
-            var x = (float)(point.X * _bitmap.Width / Bounds.Width);
-            var y = (float)(point.Y * _bitmap.Height / Bounds.Height);
+            // Convert point to bitmap coordinates, accounting for zoom
+            var x = (float)(point.X * _bitmap.Width / (Bounds.Width * zoomFactor));
+            var y = (float)(point.Y * _bitmap.Height / (Bounds.Height * zoomFactor));
             var currentPoint = new SKPoint(x, y);
             
             // Update cursor based on position
-            if (!_isMovingSelection && !_isResizingSelection && _hasSelection)
-            {
-                var handle = GetResizeHandleAtPoint(x, y);
-                switch (handle)
-                {
-                    case ResizeHandle.TopLeft:
-                    case ResizeHandle.BottomRight:
-                        Cursor = new Cursor(StandardCursorType.TopLeftCorner);
-                        break;
-                    case ResizeHandle.TopRight:
-                    case ResizeHandle.BottomLeft:
-                        Cursor = new Cursor(StandardCursorType.TopRightCorner);
-                        break;
-                    case ResizeHandle.TopCenter:
-                    case ResizeHandle.BottomCenter:
-                        Cursor = new Cursor(StandardCursorType.SizeNorthSouth);
-                        break;
-                    case ResizeHandle.MiddleLeft:
-                    case ResizeHandle.MiddleRight:
-                        Cursor = new Cursor(StandardCursorType.SizeWestEast);
-                        break;
-                    default:
-                        if (_selectionRect.Contains(x, y))
-                            Cursor = new Cursor(StandardCursorType.SizeAll);
-                        else
-                            Cursor = new Cursor(StandardCursorType.Arrow);
-                        break;
-                }
-            }
+            Cursor = new Cursor(_toolManager.GetCursor(currentPoint));
             
-            // Handle resizing selection
-            if (_isResizingSelection && _hasSelection)
-            {
-                SKRect newRect = _originalSelectionRect;
-                
-                // Calculate the delta from the start position
-                float deltaX = x - _selectionMoveStart.X;
-                float deltaY = y - _selectionMoveStart.Y;
-                
-                // Apply the resize based on which handle is active
-                switch (_activeResizeHandle)
-                {
-                    case ResizeHandle.TopLeft:
-                        newRect.Left = _originalSelectionRect.Left + deltaX;
-                        newRect.Top = _originalSelectionRect.Top + deltaY;
-                        break;
-                    case ResizeHandle.TopCenter:
-                        newRect.Top = _originalSelectionRect.Top + deltaY;
-                        break;
-                    case ResizeHandle.TopRight:
-                        newRect.Right = _originalSelectionRect.Right + deltaX;
-                        newRect.Top = _originalSelectionRect.Top + deltaY;
-                        break;
-                    case ResizeHandle.MiddleLeft:
-                        newRect.Left = _originalSelectionRect.Left + deltaX;
-                        break;
-                    case ResizeHandle.MiddleRight:
-                        newRect.Right = _originalSelectionRect.Right + deltaX;
-                        break;
-                    case ResizeHandle.BottomLeft:
-                        newRect.Left = _originalSelectionRect.Left + deltaX;
-                        newRect.Bottom = _originalSelectionRect.Bottom + deltaY;
-                        break;
-                    case ResizeHandle.BottomCenter:
-                        newRect.Bottom = _originalSelectionRect.Bottom + deltaY;
-                        break;
-                    case ResizeHandle.BottomRight:
-                        newRect.Right = _originalSelectionRect.Right + deltaX;
-                        newRect.Bottom = _originalSelectionRect.Bottom + deltaY;
-                        break;
-                }
-                
-                // Ensure the rectangle has positive width and height
-                if (newRect.Width > 0 && newRect.Height > 0)
-                {
-                    _selectionRect = newRect;
-                    InvalidateVisual();
-                }
-                
-                return;
-            }
+            // Pass the event to the tool manager
+            _toolManager.OnPointerMoved(currentPoint, _lastPoint, _bitmap);
             
-            // Handle moving selection
-            if (_isMovingSelection && _hasSelection)
-            {
-                // Calculate the offset from the start position
-                _selectionOffset.X = x - _selectionMoveStart.X;
-                _selectionOffset.Y = y - _selectionMoveStart.Y;
-                
-                // Redraw to show the selection in its new position
-                InvalidateVisual();
-                return;
-            }
-
-            // Handle drawing
-            if (!_isDrawing || _lastPoint == null) return;
-
-            using (var canvas = new SKCanvas(_bitmap))
-            {
-                canvas.DrawLine(_lastPoint.Value, currentPoint, _paint);
-            }
-
+            // Update the last point
             _lastPoint = currentPoint;
+            
             InvalidateVisual();
         }
-
+        
         // Handle pointer (mouse) released event
         private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
         {
-            if (_isResizingSelection)
-            {
-                // When resizing is complete, update the selection bitmap
-                UpdateSelectionBitmap();
-                _isResizingSelection = false;
-                _activeResizeHandle = ResizeHandle.None;
-                InvalidateVisual();
-                return;
-            }
+            if (_bitmap == null) return;
             
-            if (_isMovingSelection)
-            {
-                // Apply the move to the selection rectangle
-                _selectionRect.Offset(_selectionOffset.X, _selectionOffset.Y);
-                _selectionOffset = new SKPoint(0, 0);
-                _isMovingSelection = false;
-                InvalidateVisual();
-                return;
-            }
+            var point = e.GetPosition(this);
+            double zoomFactor = GetCurrentZoomFactor();
             
+            // Convert point to bitmap coordinates, accounting for zoom
+            var x = (float)(point.X * _bitmap.Width / (Bounds.Width * zoomFactor));
+            var y = (float)(point.Y * _bitmap.Height / (Bounds.Height * zoomFactor));
+            
+            System.Diagnostics.Debug.WriteLine($"Pointer released at screen: {point.X}, {point.Y}, bitmap: {x}, {y}, zoom: {zoomFactor}");
+            
+            // Debug output before passing to tool manager
+            System.Diagnostics.Debug.WriteLine($"OnPointerReleased before tool manager: HasSelection={_toolManager.HasSelection}");
+            
+            // Pass the event to the tool manager
+            _toolManager.OnPointerReleased(new SKPoint(x, y), _bitmap);
+            
+            // Debug output after passing to tool manager
+            System.Diagnostics.Debug.WriteLine($"OnPointerReleased after tool manager: HasSelection={_toolManager.HasSelection}");
+            
+            // Clean up temporary resources
+            _tempBitmap?.Dispose();
+            _tempBitmap = null;
             _isDrawing = false;
             _lastPoint = null;
+            
+            // Ensure the selection is visible if one was created
+            EnsureSelectionVisible();
+            
+            InvalidateVisual();
+        }
+
+        // Handle keyboard events for selection manipulation
+        private void OnKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (!_toolManager.HasSelection) return;
+            
+            // Handle arrow keys for moving selection
+            int moveStep = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 10 : 1;
+            
+            switch (e.Key)
+            {
+                case Key.Left:
+                    MoveSelection(-moveStep, 0);
+                    e.Handled = true;
+                    break;
+                case Key.Right:
+                    MoveSelection(moveStep, 0);
+                    e.Handled = true;
+                    break;
+                case Key.Up:
+                    MoveSelection(0, -moveStep);
+                    e.Handled = true;
+                    break;
+                case Key.Down:
+                    MoveSelection(0, moveStep);
+                    e.Handled = true;
+                    break;
+                case Key.Delete:
+                    // Delete the selection (clear it with white)
+                    if (_bitmap != null)
+                    {
+                        using (var canvas = new SKCanvas(_bitmap))
+                        {
+                            var clearPaint = new SKPaint { Color = SKColors.White };
+                            canvas.DrawRect(_toolManager.SelectionRect, clearPaint);
+                        }
+                        ClearSelection();
+                        InvalidateVisual();
+                    }
+                    e.Handled = true;
+                    break;
+                case Key.Escape:
+                    // Cancel the selection
+                    ClearSelection();
+                    InvalidateVisual();
+                    e.Handled = true;
+                    break;
+                case Key.R:
+                    // Rotate selection 90 degrees clockwise with Ctrl+R
+                    if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _toolManager.SelectionBitmap != null)
+                    {
+                        RotateSelection(90);
+                        e.Handled = true;
+                    }
+                    break;
+                case Key.F:
+                    // Flip selection horizontally with Ctrl+F
+                    if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _toolManager.SelectionBitmap != null)
+                    {
+                        FlipSelectionHorizontally();
+                        e.Handled = true;
+                    }
+                    break;
+                case Key.V:
+                    // Flip selection vertically with Ctrl+Shift+V
+                    if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && 
+                        e.KeyModifiers.HasFlag(KeyModifiers.Shift) && 
+                        _toolManager.SelectionBitmap != null)
+                    {
+                        FlipSelectionVertically();
+                        e.Handled = true;
+                    }
+                    break;
+            }
         }
         
-        // Update the selection bitmap after resizing
-        private void UpdateSelectionBitmap()
+        // Rotate the selection by the specified angle in degrees
+        private void RotateSelection(float angleDegrees)
         {
-            if (!_hasSelection || _bitmap == null) return;
+            if (!_toolManager.HasSelection || _toolManager.SelectionBitmap == null) return;
             
-            // Create a new bitmap for the resized selection
-            var newSelectionBitmap = new SKBitmap((int)_selectionRect.Width, (int)_selectionRect.Height);
+            // Create a new bitmap for the rotated selection
+            int newWidth = (int)_toolManager.SelectionRect.Height;
+            int newHeight = (int)_toolManager.SelectionRect.Width;
             
-            using (var canvas = new SKCanvas(newSelectionBitmap))
+            var rotatedBitmap = new SKBitmap(newWidth, newHeight);
+            
+            using (var canvas = new SKCanvas(rotatedBitmap))
             {
-                // Clear with white background
-                canvas.Clear(SKColors.White);
+                // Clear with transparent background
+                canvas.Clear(SKColors.Transparent);
                 
-                // Draw the portion of the main bitmap that corresponds to the selection area
-                var srcRect = new SKRect(
-                    _selectionRect.Left, 
-                    _selectionRect.Top, 
-                    _selectionRect.Right, 
-                    _selectionRect.Bottom);
+                // Translate to center of new bitmap
+                canvas.Translate(newWidth / 2f, newHeight / 2f);
                 
-                canvas.DrawBitmap(_bitmap, srcRect, new SKRect(0, 0, _selectionRect.Width, _selectionRect.Height));
+                // Rotate
+                canvas.RotateDegrees(angleDegrees);
+                
+                // Translate back to draw the original bitmap centered
+                canvas.Translate(-_toolManager.SelectionRect.Width / 2f, -_toolManager.SelectionRect.Height / 2f);
+                
+                // Draw the original selection bitmap
+                canvas.DrawBitmap(_toolManager.SelectionBitmap, 0, 0);
             }
             
-            // Dispose the old selection bitmap and set the new one
-            _selectionBitmap?.Dispose();
-            _selectionBitmap = newSelectionBitmap;
+            // Update the selection bitmap and rectangle
+            float centerX = _toolManager.SelectionRect.MidX;
+            float centerY = _toolManager.SelectionRect.MidY;
+            SKRect newRect = new SKRect(
+                centerX - newWidth / 2f,
+                centerY - newHeight / 2f,
+                centerX + newWidth / 2f,
+                centerY + newHeight / 2f
+            );
+            
+            // Update the selection bitmap and rectangle in the tool manager
+            _toolManager.SetSelectionBitmap(rotatedBitmap);
+            _toolManager.SetSelectionRect(newRect);
+            
+            InvalidateVisual();
+        }
+        
+        // Flip the selection horizontally
+        private void FlipSelectionHorizontally()
+        {
+            if (!_toolManager.HasSelection || _toolManager.SelectionBitmap == null) return;
+            
+            // Create a new bitmap for the flipped selection
+            var flippedBitmap = new SKBitmap(_toolManager.SelectionBitmap.Width, _toolManager.SelectionBitmap.Height);
+            
+            using (var canvas = new SKCanvas(flippedBitmap))
+            {
+                // Clear with transparent background
+                canvas.Clear(SKColors.Transparent);
+                
+                // Scale horizontally by -1 to flip
+                canvas.Scale(-1, 1);
+                
+                // Translate to draw the flipped bitmap
+                canvas.Translate(-_toolManager.SelectionBitmap.Width, 0);
+                
+                // Draw the original selection bitmap
+                canvas.DrawBitmap(_toolManager.SelectionBitmap, 0, 0);
+            }
+            
+            // Update the selection bitmap in the tool manager
+            _toolManager.SetSelectionBitmap(flippedBitmap);
+            
+            InvalidateVisual();
+        }
+        
+        // Flip the selection vertically
+        private void FlipSelectionVertically()
+        {
+            if (!_toolManager.HasSelection || _toolManager.SelectionBitmap == null) return;
+            
+            // Create a new bitmap for the flipped selection
+            var flippedBitmap = new SKBitmap(_toolManager.SelectionBitmap.Width, _toolManager.SelectionBitmap.Height);
+            
+            using (var canvas = new SKCanvas(flippedBitmap))
+            {
+                // Clear with transparent background
+                canvas.Clear(SKColors.Transparent);
+                
+                // Scale vertically by -1 to flip
+                canvas.Scale(1, -1);
+                
+                // Translate to draw the flipped bitmap
+                canvas.Translate(0, -_toolManager.SelectionBitmap.Height);
+                
+                // Draw the original selection bitmap
+                canvas.DrawBitmap(_toolManager.SelectionBitmap, 0, 0);
+            }
+            
+            // Update the selection bitmap in the tool manager
+            _toolManager.SetSelectionBitmap(flippedBitmap);
+            
+            InvalidateVisual();
+        }
+
+        // Move the selection by the specified delta
+        private void MoveSelection(int deltaX, int deltaY)
+        {
+            if (!_toolManager.HasSelection) return;
+            
+            // Get the current selection rectangle
+            SKRect selectionRect = _toolManager.SelectionRect;
+            
+            // Apply the move to the selection rectangle
+            selectionRect.Offset(deltaX, deltaY);
+            
+            // Ensure the selection stays within the bitmap bounds
+            if (_bitmap != null)
+            {
+                if (selectionRect.Left < 0) selectionRect.Offset(-selectionRect.Left, 0);
+                if (selectionRect.Top < 0) selectionRect.Offset(0, -selectionRect.Top);
+                if (selectionRect.Right > _bitmap.Width) selectionRect.Offset(_bitmap.Width - selectionRect.Right, 0);
+                if (selectionRect.Bottom > _bitmap.Height) selectionRect.Offset(0, _bitmap.Height - selectionRect.Bottom);
+            }
+            
+            // Update the selection rectangle in the tool manager
+            _toolManager.SetSelectionRect(selectionRect);
+            
+            InvalidateVisual();
         }
 
         // Method to set the current drawing color
         public void SetColor(Color color)
         {
-            if (_paint != null)
-            {
-                _paint.Color = new SKColor(color.R, color.G, color.B, color.A);
-            }
+            _toolManager.SetColor(new SKColor(color.R, color.G, color.B, color.A));
         }
 
         // Method to set the stroke width
         public void SetStrokeWidth(float width)
         {
             StrokeThickness = width;
-            if (_paint != null)
-            {
-                _paint.StrokeWidth = width;
-            }
+            _toolManager.SetStrokeWidth(width);
         }
 
         private void InitializeBitmap(int width, int height)
@@ -399,67 +461,43 @@ namespace MSPaintEx.Controls
 
             if (_bitmap == null) return;
 
+            // Debug output
+            System.Diagnostics.Debug.WriteLine($"Render called with HasSelection: {_toolManager.HasSelection}, SelectionBitmap: {_toolManager.SelectionBitmap != null}, IsMovingSelection: {_toolManager.IsMovingSelection}");
+
+            // Create a bitmap that we can draw on for this frame
+            using var renderBitmap = _bitmap.Copy();
+            
+            // Let the tool manager draw any overlays
+            using (var canvas = new SKCanvas(renderBitmap))
+            {
+                // Draw the selection if we have one
+                if (_toolManager.HasSelection && _toolManager.SelectionBitmap != null && !_toolManager.IsMovingSelection)
+                {
+                    // Debug output
+                    System.Diagnostics.Debug.WriteLine($"Drawing selection bitmap at: {_toolManager.SelectionRect.Left},{_toolManager.SelectionRect.Top}");
+                    
+                    // Draw the selection bitmap at its position
+                    canvas.DrawBitmap(_toolManager.SelectionBitmap, _toolManager.SelectionRect.Left, _toolManager.SelectionRect.Top);
+                }
+                
+                // Let the active tool draw any overlays
+                _toolManager.DrawOverlay(canvas, _bitmap);
+            }
+            
+            // Convert the bitmap to an Avalonia bitmap
+            using var data = renderBitmap.PeekPixels();
             var bitmap = new Avalonia.Media.Imaging.Bitmap(
                 Avalonia.Platform.PixelFormat.Bgra8888,
                 Avalonia.Platform.AlphaFormat.Premul,
-                _bitmap.GetPixels(),
-                new Avalonia.PixelSize(_bitmap.Width, _bitmap.Height),
+                data.GetPixels(),
+                new Avalonia.PixelSize(renderBitmap.Width, renderBitmap.Height),
                 new Avalonia.Vector(96, 96),
-                _bitmap.RowBytes);
+                data.RowBytes);
 
             context.DrawImage(
                 bitmap,
-                new Rect(0, 0, _bitmap.Width, _bitmap.Height),
+                new Rect(0, 0, renderBitmap.Width, renderBitmap.Height),
                 new Rect(0, 0, Bounds.Width, Bounds.Height));
-                
-            // Draw selection if active
-            if (_hasSelection)
-            {
-                // Create a temporary bitmap to draw the selection overlay
-                using var tempBitmap = new SKBitmap(_bitmap.Width, _bitmap.Height);
-                using var canvas = new SKCanvas(tempBitmap);
-                
-                // Draw the selection rectangle with dashed border
-                var rect = _selectionRect;
-                if (_isMovingSelection)
-                {
-                    rect.Offset(_selectionOffset.X, _selectionOffset.Y);
-                }
-                
-                canvas.DrawRect(rect, _selectionPaint);
-                
-                // Draw the selection handles (small squares at the corners and edges)
-                float handleSize = HANDLE_SIZE;
-                SKPaint handlePaint = new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill };
-                SKPaint handleBorderPaint = new SKPaint { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 1 };
-                
-                // Draw handles at each corner and edge
-                // Corners
-                DrawSelectionHandle(canvas, rect.Left, rect.Top, handleSize, handlePaint, handleBorderPaint);
-                DrawSelectionHandle(canvas, rect.Right, rect.Top, handleSize, handlePaint, handleBorderPaint);
-                DrawSelectionHandle(canvas, rect.Left, rect.Bottom, handleSize, handlePaint, handleBorderPaint);
-                DrawSelectionHandle(canvas, rect.Right, rect.Bottom, handleSize, handlePaint, handleBorderPaint);
-                
-                // Edges
-                DrawSelectionHandle(canvas, rect.Left + rect.Width / 2, rect.Top, handleSize, handlePaint, handleBorderPaint);
-                DrawSelectionHandle(canvas, rect.Left + rect.Width / 2, rect.Bottom, handleSize, handlePaint, handleBorderPaint);
-                DrawSelectionHandle(canvas, rect.Left, rect.Top + rect.Height / 2, handleSize, handlePaint, handleBorderPaint);
-                DrawSelectionHandle(canvas, rect.Right, rect.Top + rect.Height / 2, handleSize, handlePaint, handleBorderPaint);
-                
-                // Convert to Avalonia bitmap and draw
-                var selectionOverlay = new Avalonia.Media.Imaging.Bitmap(
-                    Avalonia.Platform.PixelFormat.Bgra8888,
-                    Avalonia.Platform.AlphaFormat.Premul,
-                    tempBitmap.GetPixels(),
-                    new Avalonia.PixelSize(tempBitmap.Width, tempBitmap.Height),
-                    new Avalonia.Vector(96, 96),
-                    tempBitmap.RowBytes);
-                
-                context.DrawImage(
-                    selectionOverlay,
-                    new Rect(0, 0, tempBitmap.Width, tempBitmap.Height),
-                    new Rect(0, 0, Bounds.Width, Bounds.Height));
-            }
         }
         
         private void DrawSelectionHandle(SKCanvas canvas, float x, float y, float size, SKPaint fillPaint, SKPaint borderPaint)
@@ -588,15 +626,23 @@ namespace MSPaintEx.Controls
         {
             if (_bitmap == null) return;
             
-            _selectionRect = new SKRect(0, 0, _bitmap.Width, _bitmap.Height);
-            _hasSelection = true;
+            // Create a selection rectangle that covers the entire canvas
+            SKRect selectionRect = new SKRect(0, 0, _bitmap.Width, _bitmap.Height);
+            
+            // Set the selection in the tool manager
+            _toolManager.SetTool(DrawingTool.RectangleSelect);
+            _toolManager.SetSelectionRect(selectionRect);
             
             // Create a copy of the selected area
-            _selectionBitmap = new SKBitmap((int)_selectionRect.Width, (int)_selectionRect.Height);
-            using (var canvas = new SKCanvas(_selectionBitmap))
+            var selectionBitmap = new SKBitmap((int)selectionRect.Width, (int)selectionRect.Height);
+            using (var canvas = new SKCanvas(selectionBitmap))
             {
-                canvas.DrawBitmap(_bitmap, -_selectionRect.Left, -_selectionRect.Top);
+                canvas.DrawBitmap(_bitmap, 0, 0);
             }
+            
+            // Set the selection bitmap in the tool manager
+            _toolManager.SetSelectionBitmap(selectionBitmap);
+            _toolManager.SetHasSelection(true);
             
             InvalidateVisual();
         }
@@ -604,20 +650,14 @@ namespace MSPaintEx.Controls
         // Clear the current selection
         public void ClearSelection()
         {
-            _hasSelection = false;
-            _selectionBitmap?.Dispose();
-            _selectionBitmap = null;
-            _isMovingSelection = false;
-            _isResizingSelection = false;
-            _activeResizeHandle = ResizeHandle.None;
-            Cursor = new Cursor(StandardCursorType.Arrow);
+            _toolManager.ClearSelection();
             InvalidateVisual();
         }
         
         // Cut the current selection to clipboard
         public void Cut()
         {
-            if (!_hasSelection || _bitmap == null || _selectionBitmap == null) return;
+            if (!_toolManager.HasSelection || _bitmap == null || _toolManager.SelectionBitmap == null) return;
             
             // Copy to clipboard first
             Copy();
@@ -626,7 +666,7 @@ namespace MSPaintEx.Controls
             using (var canvas = new SKCanvas(_bitmap))
             {
                 var clearPaint = new SKPaint { Color = SKColors.White };
-                canvas.DrawRect(_selectionRect, clearPaint);
+                canvas.DrawRect(_toolManager.SelectionRect, clearPaint);
             }
             
             ClearSelection();
@@ -636,7 +676,7 @@ namespace MSPaintEx.Controls
         // Copy the current selection to clipboard
         public void Copy()
         {
-            if (!_hasSelection || _selectionBitmap == null) return;
+            if (!_toolManager.HasSelection || _toolManager.SelectionBitmap == null) return;
             
             try
             {
@@ -644,10 +684,10 @@ namespace MSPaintEx.Controls
                 var avBitmap = new Avalonia.Media.Imaging.Bitmap(
                     Avalonia.Platform.PixelFormat.Bgra8888,
                     Avalonia.Platform.AlphaFormat.Premul,
-                    _selectionBitmap.GetPixels(),
-                    new Avalonia.PixelSize(_selectionBitmap.Width, _selectionBitmap.Height),
+                    _toolManager.SelectionBitmap.GetPixels(),
+                    new Avalonia.PixelSize(_toolManager.SelectionBitmap.Width, _toolManager.SelectionBitmap.Height),
                     new Avalonia.Vector(96, 96),
-                    _selectionBitmap.RowBytes);
+                    _toolManager.SelectionBitmap.RowBytes);
                 
                 // Set to clipboard using DataObject
                 var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
@@ -692,31 +732,36 @@ namespace MSPaintEx.Controls
                     var pngData = await clipboard.GetDataAsync("image/png") as byte[];
                     if (pngData != null)
                     {
+                        // Load the image from PNG data
                         using var ms = new MemoryStream(pngData);
                         var skBitmap = SKBitmap.Decode(ms);
                         
-                        if (skBitmap != null)
-                        {
-                            // Create selection from the pasted image
-                            int width = skBitmap.Width;
-                            int height = skBitmap.Height;
-                            
-                            // Create selection rectangle centered in the view
-                            float left = Math.Max(0, (_bitmap.Width - width) / 2);
-                            float top = Math.Max(0, (_bitmap.Height - height) / 2);
-                            _selectionRect = new SKRect(left, top, left + width, top + height);
-                            
-                            // Create selection bitmap
-                            _selectionBitmap?.Dispose();
-                            _selectionBitmap = skBitmap;
-                            
-                            _hasSelection = true;
-                            _isMovingSelection = true;
-                            _selectionMoveStart = new SKPoint(_selectionRect.MidX, _selectionRect.MidY);
-                            _selectionOffset = new SKPoint(0, 0);
-                            
-                            InvalidateVisual();
-                        }
+                        // Create a selection with the pasted image
+                        // Position it in the center of the visible area
+                        float centerX = _bitmap.Width / 2;
+                        float centerY = _bitmap.Height / 2;
+                        
+                        // Calculate the selection rectangle
+                        SKRect selectionRect = new SKRect(
+                            centerX - skBitmap.Width / 2,
+                            centerY - skBitmap.Height / 2,
+                            centerX + skBitmap.Width / 2,
+                            centerY + skBitmap.Height / 2
+                        );
+                        
+                        // Ensure the selection is within the bitmap bounds
+                        if (selectionRect.Left < 0) selectionRect.Offset(-selectionRect.Left, 0);
+                        if (selectionRect.Top < 0) selectionRect.Offset(0, -selectionRect.Top);
+                        if (selectionRect.Right > _bitmap.Width) selectionRect.Offset(_bitmap.Width - selectionRect.Right, 0);
+                        if (selectionRect.Bottom > _bitmap.Height) selectionRect.Offset(0, _bitmap.Height - selectionRect.Bottom);
+                        
+                        // Set up the selection in the tool manager
+                        _toolManager.SetTool(DrawingTool.RectangleSelect);
+                        _toolManager.SetSelectionRect(selectionRect);
+                        _toolManager.SetSelectionBitmap(skBitmap);
+                        _toolManager.SetHasSelection(true);
+                        
+                        InvalidateVisual();
                     }
                 }
             }
@@ -729,26 +774,26 @@ namespace MSPaintEx.Controls
         // Commit the current selection (apply any changes)
         private void CommitSelection()
         {
-            if (!_hasSelection || _bitmap == null || _selectionBitmap == null) return;
+            if (!_toolManager.HasSelection || _bitmap == null || _toolManager.SelectionBitmap == null) return;
             
             using (var canvas = new SKCanvas(_bitmap))
             {
                 // If the selection was moved, clear the original area and draw at the new position
-                if (!_selectionOffset.Equals(new SKPoint(0, 0)))
+                if (!_toolManager.SelectionOffset.Equals(new SKPoint(0, 0)))
                 {
                     // Clear the original selection area with white
                     var clearPaint = new SKPaint { Color = SKColors.White };
-                    canvas.DrawRect(_selectionRect, clearPaint);
+                    canvas.DrawRect(_toolManager.SelectionRect, clearPaint);
                     
                     // Draw the selection at its new position
-                    var destRect = _selectionRect;
-                    destRect.Offset(_selectionOffset.X, _selectionOffset.Y);
-                    canvas.DrawBitmap(_selectionBitmap, destRect.Left, destRect.Top);
+                    var destRect = _toolManager.SelectionRect;
+                    destRect.Offset(_toolManager.SelectionOffset.X, _toolManager.SelectionOffset.Y);
+                    canvas.DrawBitmap(_toolManager.SelectionBitmap, destRect.Left, destRect.Top);
                 }
                 else
                 {
                     // If the selection was resized, just draw it at its current position
-                    canvas.DrawBitmap(_selectionBitmap, _selectionRect.Left, _selectionRect.Top);
+                    canvas.DrawBitmap(_toolManager.SelectionBitmap, _toolManager.SelectionRect.Left, _toolManager.SelectionRect.Top);
                 }
             }
             
@@ -766,8 +811,127 @@ namespace MSPaintEx.Controls
             base.OnDetachedFromVisualTree(e);
             _bitmap?.Dispose();
             _bitmap = null;
-            _selectionBitmap?.Dispose();
-            _selectionBitmap = null;
+            _tempBitmap?.Dispose();
+            _tempBitmap = null;
+        }
+
+        // Method to set the current drawing tool
+        public void SetTool(DrawingTool tool)
+        {
+            _toolManager.SetTool(tool);
+            InvalidateVisual();
+        }
+
+        // Method to get the current drawing tool
+        public DrawingTool CurrentTool => _toolManager.CurrentTool;
+
+        // Method to set whether shapes should be filled
+        public void SetFillShapes(bool fill)
+        {
+            _toolManager.SetFillShapes(fill);
+        }
+
+        // Method to get whether shapes are filled
+        public bool FillShapes => _toolManager.FillShapes;
+
+        // Method to ensure the selection is properly rendered
+        private void EnsureSelectionVisible()
+        {
+            if (_toolManager.HasSelection)
+            {
+                System.Diagnostics.Debug.WriteLine("Selection is active, ensuring it's visible");
+                
+                // Force a redraw
+                InvalidateVisual();
+                
+                // Schedule another redraw after a short delay to ensure the selection is visible
+                // This is a workaround for some rendering issues
+                Task.Delay(50).ContinueWith(_ => 
+                {
+                    Dispatcher.UIThread.Post(() => 
+                    {
+                        System.Diagnostics.Debug.WriteLine("Delayed redraw for selection");
+                        InvalidateVisual();
+                    });
+                });
+            }
+        }
+
+        // Method to create a test selection
+        public void CreateTestSelection()
+        {
+            if (_bitmap == null) return;
+            
+            // Create a selection rectangle in the center of the canvas
+            float centerX = _bitmap.Width / 2;
+            float centerY = _bitmap.Height / 2;
+            int width = 300;
+            int height = 200;
+            
+            SKRect selectionRect = new SKRect(
+                centerX - width / 2,
+                centerY - height / 2,
+                centerX + width / 2,
+                centerY + height / 2
+            );
+            
+            // Create a selection bitmap
+            var selectionBitmap = new SKBitmap(width, height);
+            
+            using (var canvas = new SKCanvas(selectionBitmap))
+            {
+                // Clear with a semi-transparent red color
+                canvas.Clear(new SKColor(255, 0, 0, 128));
+                
+                // Draw a pattern to make it visible
+                var paint = new SKPaint
+                {
+                    Style = SKPaintStyle.Stroke,
+                    Color = SKColors.White,
+                    StrokeWidth = 3
+                };
+                
+                for (int i = 0; i < width; i += 20)
+                {
+                    canvas.DrawLine(i, 0, i, height, paint);
+                }
+                
+                for (int i = 0; i < height; i += 20)
+                {
+                    canvas.DrawLine(0, i, width, i, paint);
+                }
+                
+                // Draw a diagonal cross
+                canvas.DrawLine(0, 0, width, height, paint);
+                canvas.DrawLine(width, 0, 0, height, paint);
+            }
+            
+            // Set the tool to rectangle select
+            _toolManager.SetTool(DrawingTool.RectangleSelect);
+            
+            // Set up the selection in the tool manager
+            _toolManager.SetSelectionRect(selectionRect);
+            _toolManager.SetSelectionBitmap(selectionBitmap);
+            _toolManager.SetHasSelection(true);
+            
+            // Debug output
+            System.Diagnostics.Debug.WriteLine("Created test selection with HasSelection = " + _toolManager.HasSelection);
+            
+            // Ensure the selection is visible
+            EnsureSelectionVisible();
+            
+            // Force multiple redraws to ensure the selection is visible
+            for (int i = 0; i < 5; i++)
+            {
+                Task.Delay(100 * i).ContinueWith(_ => 
+                {
+                    Dispatcher.UIThread.Post(() => 
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Forced redraw {i} for test selection");
+                        InvalidateVisual();
+                    });
+                });
+            }
         }
     }
 } 

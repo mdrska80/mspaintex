@@ -99,6 +99,7 @@
                     <MenuItem Header="_Paste" InputGesture="Ctrl+V" Click="OnPasteClick"/>
                     <MenuItem Header="C_lear Selection" InputGesture="Delete" Click="OnClearSelectionClick"/>
                     <Separator/>
+                    <MenuItem Header="Test Selection" Click="OnTestSelectionClick"/>
                     <MenuItem Header="Select _All" InputGesture="Ctrl+A" Click="OnSelectAllClick"/>
                 </MenuItem>
                 
@@ -174,6 +175,105 @@
                             Margin="5,0,0,0"
                             Classes="modern"/>
                 </StackPanel>
+            </StackPanel>
+            
+            <!-- Tools toolbar -->
+            <StackPanel DockPanel.Dock="Left" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Width="60" Margin="0,0,5,0">
+                <TextBlock Text="Tools" HorizontalAlignment="Center" Margin="0,5,0,5" FontWeight="SemiBold"/>
+                
+                <!-- Selection tools -->
+                <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
+                    <StackPanel>
+                        <RadioButton GroupName="Tools" Content="&#xE7A8;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Free-form Selection" Tag="FreeformSelect" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xEF20;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Rectangle Selection" Tag="RectangleSelect" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center" IsChecked="True"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Drawing tools -->
+                <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
+                    <StackPanel>
+                        <RadioButton GroupName="Tools" Content="&#xEDFB;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Pencil" Tag="Pencil" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xF0AD;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Brush" Tag="Brush" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xE74D;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Eraser" Tag="Eraser" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xF8B3;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Fill" Tag="Fill" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xE8D2;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Text" Tag="Text" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xF0FC;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Color Picker" Tag="ColorPicker" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Shape tools -->
+                <Border Background="#10000000" Padding="2" Margin="3" CornerRadius="3">
+                    <StackPanel>
+                        <RadioButton GroupName="Tools" Content="&#xE912;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Line" Tag="Line" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xEA3F;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Rectangle" Tag="Rectangle" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xF158;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Ellipse" Tag="Ellipse" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xF0E4;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Rounded Rectangle" Tag="RoundedRectangle" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                        <RadioButton GroupName="Tools" Content="&#xF0AD;" FontFamily="Segoe MDL2 Assets" 
+                                   ToolTip.Tip="Polygon" Tag="Polygon" 
+                                   Click="OnToolSelected" Margin="2" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Tool options -->
+                <Border Background="#10000000" Padding="5" Margin="3,10,3,3" CornerRadius="3">
+                    <StackPanel>
+                        <TextBlock Text="Size:" Margin="0,0,0,5" HorizontalAlignment="Center"/>
+                        <NumericUpDown x:Name="ToolSizeSelector" 
+                                     Value="1"
+                                     Minimum="1"
+                                     Maximum="50"
+                                     ValueChanged="OnToolSizeChanged"
+                                     Width="50"
+                                     Height="30"
+                                     Padding="4,0"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center"
+                                     FormatString="0"
+                                     ClipValueToMinMax="True"
+                                     ShowButtonSpinner="True"
+                                     AllowSpin="True"
+                                     Increment="1"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Fill options -->
+                <Border Background="#10000000" Padding="5" Margin="3" CornerRadius="3">
+                    <StackPanel>
+                        <TextBlock Text="Fill:" Margin="0,0,0,5" HorizontalAlignment="Center"/>
+                        <ToggleButton x:Name="FillShapesToggle" 
+                                    Content="&#xE739;" 
+                                    FontFamily="Segoe MDL2 Assets"
+                                    ToolTip.Tip="Fill Shapes"
+                                    Click="OnFillShapesToggle"
+                                    HorizontalAlignment="Center"
+                                    Width="30"
+                                    Height="30"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <!-- Left color palette -->

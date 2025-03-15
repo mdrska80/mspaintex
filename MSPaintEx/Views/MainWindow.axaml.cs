@@ -11,6 +11,9 @@ using MSPaintEx.Services;
 using System.Linq;
 using SkiaSharp;
 using System.IO;
+using Avalonia.Controls.Primitives;
+using MSPaintEx.Tools;
+using Avalonia;
 
 namespace MSPaintEx.Views;
 
@@ -32,6 +35,13 @@ public partial class MainWindow : Window
     
     // Track the current file for Save operations
     private IStorageFile? _currentFile;
+    
+    // Current selected tool
+    private DrawingTool _currentTool = DrawingTool.RectangleSelect;
+    
+    // Tool size and fill options
+    private int _toolSize = 1;
+    private bool _fillShapes = false;
 
     public MainWindow()
     {
@@ -87,6 +97,9 @@ public partial class MainWindow : Window
             
             // Initialize canvas
             _canvas.Clear();
+            
+            // Subscribe to color selection events
+            _canvas.ColorSelected += OnCanvasColorSelected;
 
             // Ensure keyboard shortcuts work by handling them directly
             this.KeyDown += (s, e) => 
@@ -137,6 +150,15 @@ public partial class MainWindow : Window
         try
         {
             LogService.LogInfo(LOG_SOURCE, $"Updating zoom to {newZoom}%");
+            
+            // Store the current scroll position before zooming
+            double horizontalOffset = _scrollViewer?.Offset.X ?? 0;
+            double verticalOffset = _scrollViewer?.Offset.Y ?? 0;
+            
+            // Calculate the current zoom factor
+            double oldZoomFactor = (double)_currentZoom / 100.0;
+            
+            // Update the zoom level
             _currentZoom = Math.Max(MIN_ZOOM, Math.Min(MAX_ZOOM, newZoom));
             
             if (_zoomLevel == null)
@@ -152,13 +174,31 @@ public partial class MainWindow : Window
                 return;
             }
             
-            double zoomFactor = (double)_currentZoom / 100.0;
-            _canvasScale.ScaleX = zoomFactor;
-            _canvasScale.ScaleY = zoomFactor;
+            // Calculate the new zoom factor
+            double newZoomFactor = (double)_currentZoom / 100.0;
+            
+            // Set the scale transform
+            _canvasScale.ScaleX = newZoomFactor;
+            _canvasScale.ScaleY = newZoomFactor;
 
+            // Get the canvas dimensions
+            double canvasWidth = _canvasContainer?.Width ?? 800;
+            double canvasHeight = _canvasContainer?.Height ?? 600;
+            
             // Update the scroll content size to match the zoomed canvas
-            _scrollContent.Width = 800 * zoomFactor;
-            _scrollContent.Height = 600 * zoomFactor;
+            _scrollContent.Width = canvasWidth * newZoomFactor;
+            _scrollContent.Height = canvasHeight * newZoomFactor;
+            
+            // Calculate the new scroll position to keep the top-left corner fixed
+            if (_scrollViewer != null)
+            {
+                // Calculate the ratio between the new and old zoom factors
+                double zoomRatio = newZoomFactor / oldZoomFactor;
+                
+                // Apply the ratio to the scroll position
+                _scrollViewer.Offset = new Vector(horizontalOffset * zoomRatio, verticalOffset * zoomRatio);
+            }
+            
             LogService.LogInfo(LOG_SOURCE, "Zoom updated successfully");
         }
         catch (Exception ex)
@@ -774,4 +814,155 @@ public partial class MainWindow : Window
     }
 
     #endregion
+
+    // Handle tool selection
+    private void OnToolSelected(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is RadioButton button && button.Tag is string toolName)
+            {
+                LogService.LogInfo(LOG_SOURCE, $"Tool selected: {toolName}");
+                
+                // Parse the tool name to get the enum value
+                if (Enum.TryParse<DrawingTool>(toolName, out var tool))
+                {
+                    _currentTool = tool;
+                    
+                    // Update cursor based on selected tool
+                    UpdateCursorForTool();
+                    
+                    // Update UI elements based on tool
+                    UpdateUIForTool();
+                    
+                    // Update the canvas tool
+                    if (_canvas != null)
+                    {
+                        _canvas.SetTool(_currentTool);
+                    }
+                }
+                else
+                {
+                    LogService.LogWarning(LOG_SOURCE, $"Unknown tool: {toolName}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error selecting tool", ex);
+        }
+    }
+    
+    // Update cursor based on selected tool
+    private void UpdateCursorForTool()
+    {
+        if (_canvas == null) return;
+        
+        switch (_currentTool)
+        {
+            case DrawingTool.RectangleSelect:
+            case DrawingTool.FreeformSelect:
+                _canvas.Cursor = new Cursor(StandardCursorType.Cross);
+                break;
+            case DrawingTool.ColorPicker:
+                _canvas.Cursor = new Cursor(StandardCursorType.Hand);
+                break;
+            case DrawingTool.Fill:
+                _canvas.Cursor = new Cursor(StandardCursorType.Hand);
+                break;
+            case DrawingTool.Text:
+                _canvas.Cursor = new Cursor(StandardCursorType.Ibeam);
+                break;
+            default:
+                _canvas.Cursor = new Cursor(StandardCursorType.Arrow);
+                break;
+        }
+    }
+    
+    // Update UI elements based on selected tool
+    private void UpdateUIForTool()
+    {
+        // Enable/disable tool size control based on tool
+        var toolSizeSelector = this.FindControl<NumericUpDown>("ToolSizeSelector");
+        if (toolSizeSelector != null)
+        {
+            bool showToolSize = _currentTool != DrawingTool.RectangleSelect && 
+                               _currentTool != DrawingTool.FreeformSelect &&
+                               _currentTool != DrawingTool.Fill &&
+                               _currentTool != DrawingTool.ColorPicker &&
+                               _currentTool != DrawingTool.Text;
+            
+            toolSizeSelector.IsEnabled = showToolSize;
+        }
+        
+        // Enable/disable fill toggle based on tool
+        var fillToggle = this.FindControl<ToggleButton>("FillShapesToggle");
+        if (fillToggle != null)
+        {
+            bool showFillOption = _currentTool == DrawingTool.Rectangle || 
+                                 _currentTool == DrawingTool.Ellipse ||
+                                 _currentTool == DrawingTool.RoundedRectangle ||
+                                 _currentTool == DrawingTool.Polygon;
+            
+            fillToggle.IsEnabled = showFillOption;
+        }
+    }
+    
+    // Handle tool size changes
+    private void OnToolSizeChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+    {
+        if (!e.NewValue.HasValue) return;
+        
+        _toolSize = (int)e.NewValue.Value;
+        LogService.LogInfo(LOG_SOURCE, $"Tool size changed to: {_toolSize}");
+        
+        // Update stroke width for drawing tools
+        if (_canvas != null)
+        {
+            _canvas.SetStrokeWidth(_toolSize);
+        }
+    }
+    
+    // Handle fill shapes toggle
+    private void OnFillShapesToggle(object? sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleButton toggle)
+        {
+            _fillShapes = toggle.IsChecked ?? false;
+            LogService.LogInfo(LOG_SOURCE, $"Fill shapes toggled: {_fillShapes}");
+            
+            // Update the canvas fill option
+            if (_canvas != null)
+            {
+                _canvas.SetFillShapes(_fillShapes);
+            }
+        }
+    }
+
+    private void OnCanvasColorSelected(object? sender, SKColor skColor)
+    {
+        // Convert SKColor to Avalonia Color
+        var color = new Color(skColor.Alpha, skColor.Red, skColor.Green, skColor.Blue);
+        
+        // Handle color selection event from the DrawingCanvas
+        OnColorSelected(sender, color);
+    }
+
+    // Handle test selection click
+    private void OnTestSelectionClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LogService.LogInfo(LOG_SOURCE, "Testing selection");
+            
+            if (_canvas != null)
+            {
+                _canvas.CreateTestSelection();
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError(LOG_SOURCE, "Error testing selection", ex);
+        }
+    }
 }
