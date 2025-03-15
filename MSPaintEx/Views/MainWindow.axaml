@@ -12,9 +12,7 @@
         Focusable="True"
         KeyboardNavigation.IsTabStop="True"
         WindowStartupLocation="CenterScreen"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
-        ExtendClientAreaTitleBarHeightHint="-1"
+        ExtendClientAreaToDecorationsHint="False"
         Background="#FFFFFFFF"
         TransparencyLevelHint="AcrylicBlur"
         CanResize="True"
@@ -76,30 +74,6 @@
         </Panel>
 
         <DockPanel LastChildFill="True">
-            <!-- Custom Title Bar -->
-            <Grid Height="32" 
-                  Background="Transparent"
-                  PointerPressed="OnTitleBarPointerPressed"
-                  DockPanel.Dock="Top">
-                <DockPanel LastChildFill="True">
-                    <Button Classes="modern-close"
-                            DockPanel.Dock="Right"
-                            Click="OnExitClick"/>
-                    <Button Classes="modern secondary"
-                            DockPanel.Dock="Right"
-                            Click="OnMaximizeClick"
-                            Content="□"/>
-                    <Button Classes="modern secondary"
-                            DockPanel.Dock="Right"
-                            Click="OnMinimizeClick"
-                            Content="_"/>
-                    <TextBlock Text="MSPaintEx"
-                              FontSize="13"
-                              Margin="16,0"
-                              VerticalAlignment="Center"/>
-                </DockPanel>
-            </Grid>
-
             <!-- Main Menu -->
             <Menu DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <MenuItem Header="_File">
